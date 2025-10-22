@@ -1,0 +1,71 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Courses - Shiksh Sarathi</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+<header class="bg-white shadow">
+  <div class="container mx-auto px-6 py-4 flex items-center justify-between">
+    <div class="text-2xl font-bold text-blue-600">Shiksh Sarathi</div>
+    <nav class="space-x-4 hidden md:block">
+      <a href="{% url 'home' %}" class="text-gray-700 hover:text-blue-600">Home</a>
+      <a href="{% url 'courses' %}" class="text-blue-600 font-semibold">Courses</a>
+      <a href="{% url 'materials' %}" class="text-gray-700 hover:text-blue-600">Materials</a>
+      <a href="{% url 'register' %}" class="text-white bg-blue-600 px-4 py-2 rounded-lg">Register</a>
+      <a href="{% url 'contact' %}" class="text-gray-700 hover:text-blue-600">Contact</a>
+    </nav>
+  </div>
+</header>
+
+<section class="container mx-auto px-6 py-12">
+  <h1 class="text-3xl font-bold mb-6 text-gray-900">Our Courses</h1>
+  
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {% for course in courses %}
+      <div class="bg-white rounded-xl shadow-lg overflow-hidden flex flex-col">
+        {% if course.thumbnail %}
+          <img src="{{ course.thumbnail.url }}" alt="{{ course.title }}" class="w-full h-40 object-cover">
+        {% else %}
+          <div class="w-full h-40 bg-blue-100 flex items-center justify-center text-3xl font-bold text-blue-600">
+            {{ course.title|slice:":1" }}
+          </div>
+        {% endif %}
+        
+        <div class="p-4 flex-1 flex flex-col justify-between">
+          <div>
+            <h2 class="text-lg font-semibold text-gray-800">{{ course.title }}</h2>
+            <p class="text-gray-500 mt-1 text-sm">{{ course.short_desc }}</p>
+          </div>
+          <div class="mt-4 flex justify-between items-center">
+            <span class="text-gray-600 text-sm">Duration: {{ course.duration }}</span>
+            <span class="text-blue-600 font-semibold">₹{{ course.fee }}</span>
+          </div>
+          <div class="mt-4">
+            <a href="{% url 'course_detail' course.id %}" class="block text-center bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">View Course</a>
+          </div>
+        </div>
+      </div>
+    {% empty %}
+      <div class="text-gray-500 col-span-full text-center py-10">
+        No courses added yet — please check back later.
+      </div>
+    {% endfor %}
+  </div>
+</section>
+
+<footer class="bg-white border-t mt-12">
+  <div class="container mx-auto px-6 py-8 text-gray-600 flex flex-col md:flex-row justify-between gap-4">
+    <div>© 2025 Shiksh Sarathi. All rights reserved.</div>
+    <div>
+      <a href="{% url 'contact' %}" class="text-blue-600 hover:underline">Contact Us</a>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

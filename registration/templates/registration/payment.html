@@ -1,0 +1,53 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Payment</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+</head>
+
+<body class="flex items-center justify-center min-h-screen bg-gray-100">
+    <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-md text-center">
+        <h1 class="text-2xl font-bold mb-4">Complete Payment</h1>
+        <p class="mb-6">Hello {{ participant.full_name }}! Click below to pay ₹100 for registration.</p>
+
+        <button id="rzp-button1"
+            class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg w-full">
+            Pay ₹100
+        </button>
+    </div>
+
+    <script>
+        var options = {
+            "key": "{{ razorpay_key_id }}",
+            "amount": "{{ razorpay_order.amount }}",
+            "currency": "INR",
+            "name": "Competition Registration",
+            "description": "Registration Fee",
+            "order_id": "{{ razorpay_order.id }}",
+            "handler": function (response) {
+                window.location.href = "{% url 'payment_success' participant.id %}";
+            },
+            "prefill": {
+                "name": "{{ participant.full_name }}",
+                "email": "{{ participant.email }}",
+                "contact": "{{ participant.phone_number }}"
+            },
+            "theme": {
+                "color": "#3399cc"
+            }
+        };
+
+        var rzp1 = new Razorpay(options);
+        document.getElementById('rzp-button1').onclick = function (e) {
+            rzp1.open();
+            e.preventDefault();
+        }
+    </script>
+</body>
+
+</html>
