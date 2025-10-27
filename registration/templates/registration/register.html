@@ -1,218 +1,325 @@
-{% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Competition Registration</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+{% extends 'registration/base.html' %}
+{% block content %}
+
 <style>
-/* Slideshow */
-.slide-image { position: absolute; width:100%; height:100%; object-fit:cover; opacity:0; transition: opacity 1.2s ease-in-out, transform 20s ease; transform: scale(1); }
-.slide-image.active { opacity:1; transform: scale(1.05); }
-.animate-fadeIn { animation: fadeIn 1.2s ease forwards; }
-@keyframes fadeIn { from {opacity:0; transform: translateY(16px);} to {opacity:1; transform: translateY(0);} }
+/* -------------------- GENERAL SETUP & COLORS -------------------- */
+:root {
+    --primary-color: #1f3d7a;    /* Deep Blue */
+    --secondary-color: #3a7bd5;  /* Bright Blue */
+    --accent-color: #ff6b6b;     /* Red/Pink Accent */
+    --light-bg: #f5f7fa;
+    --shadow-light: 0 12px 40px rgba(0, 0, 0, 0.15); /* Stronger shadow */
+}
 
-/* Icon hover */
-.input-icon { transition: transform .25s, color .25s; }
-.input-icon:hover { transform: scale(1.15) rotate(6deg); color:#2563eb; }
+.form-section {
+    background-color: var(--light-bg);
+    padding: 80px 0; /* More vertical padding for laptop view */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: calc(100vh - 100px);
+}
 
-/* valid/invalid outlines */
-.field-valid { border-color: #10b981 !important; box-shadow: 0 0 0 4px rgba(16,185,129,0.08); }
-.field-invalid { border-color: #ef4444 !important; box-shadow: 0 0 0 4px rgba(239,68,68,0.06); }
+.register-container {
+    max-width: 800px; /* Wider container for better laptop spacing */
+    width: 90%;
+    background: #ffffff;
+    padding: 50px; /* Increased internal padding */
+    border-radius: 18px;
+    box-shadow: var(--shadow-light);
+    border: 1px solid #e5e7eb;
+}
 
-/* small inline message */
-.inline-msg { font-size: 0.8rem; margin-top: 0.25rem; }
+.form-header h1 {
+    font-size: 2.8rem;
+    color: var(--primary-color);
+    margin-bottom: 5px;
+    text-align: center;
+    font-weight: 800;
+}
 
-/* success popup animation */
-#successMessage > div { transform: translateY(-8px); transition: transform .25s ease; }
-#successMessage.show > div { transform: translateY(0); }
+.form-header .tagline-text {
+    text-align: center;
+    color: #4a5568;
+    margin-bottom: 40px;
+    font-size: 1.1rem;
+    padding-bottom: 8px;
+    border-bottom: 4px solid var(--accent-color); /* Thicker accent line */
+    display: inline-block;
+}
 
-/* keep layout */
-body { font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; }
+/* -------------------- FORM LAYOUT AND FIELDS -------------------- */
+
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr; 
+    gap: 30px; /* Increased gap for better spacing on laptop */
+    margin-bottom: 20px;
+}
+
+.form-group {
+    position: relative;
+}
+
+.admission-form label {
+    display: block;
+    font-weight: 700; /* Bolder labels */
+    color: var(--primary-color);
+    margin-bottom: 8px;
+    font-size: 1rem;
+}
+
+/* Required field indicator */
+.admission-form label:not([for="id_email"])::after {
+    content: ' *';
+    color: var(--accent-color);
+    font-size: 1.1em;
+}
+
+/* Input container for icon and field */
+.input-group {
+    display: flex;
+    align-items: center;
+    border: 2px solid #ddd;
+    border-radius: 10px; /* Slightly more rounded corners */
+    transition: all 0.3s ease-in-out;
+    background-color: #fcfcfc;
+}
+
+/* HOVER EFFECT - Better Focus */
+.input-group:hover {
+    border-color: #ccc;
+}
+
+.input-group:focus-within {
+    border-color: var(--secondary-color);
+    box-shadow: 0 0 0 4px rgba(58, 123, 213, 0.25); /* Clearer focus ring */
+}
+
+.input-icon {
+    padding: 12px 15px; /* Bigger padding for icon */
+    color: var(--primary-color);
+    font-size: 1.2rem;
+    border-right: 1px solid #ddd;
+    height: 100%;
+}
+
+/* Base style for inputs (form-input class from forms.py) */
+.form-input {
+    flex-grow: 1;
+    border: none;
+    padding: 14px 15px; /* Increased padding */
+    font-size: 1rem;
+    color: #374151;
+    background: none;
+    border-radius: 0 8px 8px 0;
+    outline: none;
+    height: 100%;
+    /* Fix for select and date height consistency */
+}
+
+/* Special styling for Textarea (Address) */
+.full-width-group {
+    grid-column: 1 / -1; /* Spans both columns */
+}
+
+.textarea-group .input-group {
+    border: 2px solid #ddd;
+    display: block;
+    background-color: #fcfcfc;
+    border-radius: 10px;
+}
+.textarea-group .input-icon {
+    border-right: none;
+    align-self: flex-start;
+    padding: 15px;
+    float: left; /* Icon floats left */
+}
+.textarea-group textarea {
+    border: none !important; 
+    padding: 15px 15px 15px 50px; /* Pushed right for icon */
+    height: 120px; 
+    resize: vertical;
+    width: calc(100% - 50px); /* Adjust width for float */
+    float: right;
+    border-radius: 0 10px 10px 0;
+    background: none;
+}
+
+/* File Input Styling (Full-width for better visibility) */
+.file-upload-group {
+    grid-column: 1 / -1;
+    padding-top: 10px;
+}
+.file-upload-group input[type="file"] {
+    padding: 12px 15px;
+    border: 2px solid #ddd;
+    border-radius: 10px;
+    width: 100%;
+}
+
+/* -------------------- SUBMIT BUTTON & EFFECTS -------------------- */
+
+.submit-btn {
+    width: 100%;
+    margin-top: 50px;
+    padding: 20px; /* Larger button */
+    font-size: 1.3rem;
+    border-radius: 12px;
+    background: linear-gradient(90deg, var(--secondary-color) 0%, var(--primary-color) 100%);
+    box-shadow: 0 8px 25px rgba(30, 61, 122, 0.5);
+    transition: all 0.3s ease-in-out;
+}
+
+.submit-btn:hover {
+    box-shadow: 0 15px 40px rgba(30, 61, 122, 0.8);
+    transform: translateY(-4px); 
+}
+
+/* Error messages styling */
+.errorlist {
+    color: var(--accent-color);
+    margin-top: 5px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    padding-left: 0;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 992px) {
+    .register-container {
+        padding: 40px;
+    }
+    .form-grid {
+        gap: 20px;
+    }
+}
+@media (max-width: 768px) {
+    .form-grid {
+        grid-template-columns: 1fr; /* Single column on tablets/mobiles */
+    }
+    .register-container {
+        padding: 30px 20px;
+    }
+    .form-header h1 {
+        font-size: 2.2rem;
+    }
+    .textarea-group textarea {
+        width: 100%;
+        float: none;
+        padding: 15px;
+    }
+    .textarea-group .input-icon {
+        display: none; /* Hide icon on small screen for simpler look */
+    }
+}
 </style>
-</head>
-<body class="min-h-screen relative">
 
-<!-- Background slideshow -->
-<div class="absolute inset-0">
-    <img src="https://images.unsplash.com/photo-1596495577886-d920f0d6c35c?auto=format&fit=crop&w=1350&q=80" class="slide-image active">
-    <img src="https://images.unsplash.com/photo-1573164574572-cb89e39749b4?auto=format&fit=crop&w=1350&q=80" class="slide-image">
-    <img src="https://images.unsplash.com/photo-1604079620034-2d2e399d3b50?auto=format&fit=crop&w=1350&q=80" class="slide-image">
-    <div class="absolute inset-0 bg-black bg-opacity-40"></div>
-</div>
-
-<!-- Form container -->
-<div class="relative z-10 flex flex-col items-center justify-center min-h-screen px-4">
-    <div class="bg-white bg-opacity-95 backdrop-blur-md p-8 md:p-10 rounded-3xl shadow-2xl w-full max-w-xl animate-fadeIn">
-        <h1 class="text-3xl md:text-4xl lg:text-5xl font-extrabold text-center mb-6 md:mb-8">🏆 Competition Registration</h1>
-
-        <!-- <form method="POST" enctype="multipart/form-data" id="registrationForm" class="space-y-4"> -->
-            <form method="POST" enctype="multipart/form-data" id="registrationForm" class="space-y-4" action="{% url 'register' %}">
-
+<section class="register-page form-section">
+    <div class="container register-container">
+        
+        <div class="form-header">
+            <h1>Course Enrollment Form</h1>
+            <p class="tagline-text">Secure your future with us.</p>
+        </div>
+        
+        <form method="POST" enctype="multipart/form-data" class="admission-form">
             {% csrf_token %}
-
-            {% for field in form %}
-            <!-- wrapper: keep consistent classes so JS can style wrapper -->
-            <div class="field-wrapper flex items-center border-2 border-gray-300 rounded-lg p-2 transition">
-                {% if field.name == 'full_name' %}
-                    <i class="fa fa-user text-blue-500 text-xl mr-3 input-icon"></i>
-                {% elif field.name == 'dob' %}
-                    <i class="fa fa-calendar-alt text-green-500 text-xl mr-3 input-icon"></i>
-                {% elif field.name == 'gender' %}
-                    <i class="fa fa-venus-mars text-pink-500 text-xl mr-3 input-icon"></i>
-                {% elif field.name == 'photo' %}
-                    <i class="fa fa-image text-purple-500 text-xl mr-3 input-icon"></i>
-                {% elif field.name == 'school_name' %}
-                    <i class="fa fa-school text-yellow-500 text-xl mr-3 input-icon"></i>
-                {% elif field.name == 'school_class' %}
-                    <i class="fa fa-chalkboard text-indigo-500 text-xl mr-3 input-icon"></i>
-                {% elif field.name == 'school_address' %}
-                    <i class="fa fa-map-marker-alt text-red-500 text-xl mr-3 input-icon"></i>
-                {% elif field.name == 'phone_number' %}
-                    <i class="fa fa-phone text-green-500 text-xl mr-3 input-icon"></i>
-                {% endif %}
-
-                <div class="flex-1">
-                    {{ field }}
-                    <div class="inline-msg text-sm text-red-600 mt-1" id="error-{{ field.name }}"></div>
+            
+            <div class="form-grid">
+                
+                <div class="form-group">
+                    <label for="{{ form.full_name.id_for_label }}">Full Name</label>
+                    <div class="input-group">
+                        <span class="input-icon"><i class="fas fa-user"></i></span>
+                        {{ form.full_name }}
+                    </div>
+                    {% if form.full_name.errors %}{{ form.full_name.errors }}{% endif %}
                 </div>
-            </div>
-            {% endfor %}
+                
+                <div class="form-group">
+                    <label for="{{ form.dob.id_for_label }}">Date of Birth</label>
+                    <div class="input-group">
+                        <span class="input-icon"><i class="fas fa-calendar-alt"></i></span>
+                        {{ form.dob }}
+                    </div>
+                    {% if form.dob.errors %}{{ form.dob.errors }}{% endif %}
+                </div>
 
-            <button id="submitBtn" type="submit" class="w-full mt-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold py-3 rounded-xl shadow hover:shadow-lg transition transform hover:-translate-y-0.5">
-                Register Now
+                <div class="form-group">
+                    <label for="{{ form.gender.id_for_label }}">Gender</label>
+                    <div class="input-group">
+                        <span class="input-icon"><i class="fas fa-venus-mars"></i></span>
+                        {{ form.gender }}
+                    </div>
+                    {% if form.gender.errors %}{{ form.gender.errors }}{% endif %}
+                </div>
+                
+                <div class="form-group">
+                    <label for="{{ form.course.id_for_label }}">Desired Course</label>
+                    <div class="input-group">
+                        <span class="input-icon"><i class="fas fa-book-open"></i></span>
+                        {{ form.course }}
+                    </div>
+                    {% if form.course.errors %}{{ form.course.errors }}{% endif %}
+                </div>
+                
+                <div class="form-group">
+                    <label for="{{ form.school_name.id_for_label }}">School Name</label>
+                    <div class="input-group">
+                        <span class="input-icon"><i class="fas fa-school"></i></span>
+                        {{ form.school_name }}
+                    </div>
+                    {% if form.school_name.errors %}{{ form.school_name.errors }}{% endif %}
+                </div>
+                
+                <div class="form-group">
+                    <label for="{{ form.school_class.id_for_label }}">Class/Grade</label>
+                    <div class="input-group">
+                        <span class="input-icon"><i class="fas fa-graduation-cap"></i></span>
+                        {{ form.school_class }}
+                    </div>
+                    {% if form.school_class.errors %}{{ form.school_class.errors }}{% endif %}
+                </div>
+                
+                <div class="form-group">
+                    <label for="{{ form.phone_number.id_for_label }}">Phone Number</label>
+                    <div class="input-group">
+                        <span class="input-icon"><i class="fas fa-phone"></i></span>
+                        {{ form.phone_number }}
+                    </div>
+                    {% if form.phone_number.errors %}{{ form.phone_number.errors }}{% endif %}
+                </div>
+                
+                <div class="form-group">
+                    <label for="{{ form.email.id_for_label }}">Email Address (Optional)</label>
+                    <div class="input-group">
+                        <span class="input-icon"><i class="fas fa-envelope"></i></span>
+                        {{ form.email }}
+                    </div>
+                    {% if form.email.errors %}{{ form.email.errors }}{% endif %}
+                </div>
+                
+            </div> <div class="form-group full-width-group textarea-group">
+                <label for="{{ form.school_address.id_for_label }}">Full School/Home Address</label>
+                <div class="input-group">
+                    <span class="input-icon"><i class="fas fa-map-marker-alt"></i></span>
+                    {{ form.school_address }}
+                </div>
+                {% if form.school_address.errors %}{{ form.school_address.errors }}{% endif %}
+            </div>
+
+            <div class="form-group file-upload-group">
+                <label for="{{ form.photo.id_for_label }}">Participant Photo (JPG/PNG)</label>
+                {{ form.photo }}
+                {% if form.photo.errors %}{{ form.photo.errors }}{% endif %}
+            </div>
+            
+            <button type="submit" class="submit-btn">
+                <i class="fas fa-check-circle"></i> Complete Enrollment
             </button>
         </form>
     </div>
-</div>
+</section>
 
-<!-- Success popup -->
-<div id="successMessage" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-    <div class="bg-white p-6 md:p-8 rounded-2xl shadow-xl text-center">
-        <h3 class="text-xl font-bold text-green-600 mb-2">Registration Successful!</h3>
-        <p class="text-sm text-gray-700">Thank you — we received your registration.</p>
-        <button onclick="closeSuccess()" class="mt-4 px-4 py-2 bg-green-500 text-white rounded-lg">Close</button>
-    </div>
-</div>
-
-<script>
-// ---------- Slideshow ----------
-let slides = document.querySelectorAll('.slide-image');
-let slideIndex = 0;
-setInterval(() => {
-    slides[slideIndex].classList.remove('active');
-    slideIndex = (slideIndex + 1) % slides.length;
-    slides[slideIndex].classList.add('active');
-}, 7000);
-
-// ---------- Helper validators (client-side) ----------
-const validators = {
-    full_name: function(v) {
-        if(!v || v.trim().length < 2) return "Enter full name (min 2 chars).";
-        if(!/^[A-Za-z\s\.]+$/.test(v)) return "Name can contain letters, spaces and dots only.";
-        return "";
-    },
-    dob: function(v) {
-        if(!v) return "Date of birth required.";
-        const d = new Date(v);
-        const today = new Date();
-        if(isNaN(d.getTime())) return "Invalid date.";
-        if(d > today) return "Date of birth cannot be in the future.";
-        let age = today.getFullYear() - d.getFullYear();
-        const m = today.getMonth() - d.getMonth();
-        if (m < 0 || (m === 0 && today.getDate() < d.getDate())) age--;
-        if(age < 5) return "Participant must be at least 5 years old.";
-        return "";
-    },
-    gender: function(v) { if(!v || v === "") return "Select gender."; return ""; },
-    photo: function(fileInput) {
-        const f = fileInput.files[0];
-        if(!f) return "Please upload a photo.";
-        const allowed = ['image/jpeg','image/png'];
-        if(!allowed.includes(f.type)) return "Only JPG or PNG images are allowed.";
-        const maxBytes = 5 * 1024 * 1024;
-        if(f.size > maxBytes) return "Photo must be <= 5 MB.";
-        return "";
-    },
-    school_name: function(v) {
-        if(!v || v.trim().length < 2) return "Enter school name (min 2 chars).";
-        if(!/^[A-Za-z0-9\s\.\-&()]+$/.test(v)) return "School name has invalid characters.";
-        return "";
-    },
-    school_class: function(v) {
-        if(v === null || v === undefined || v === "") return "Enter class (1-12).";
-        const n = Number(v);
-        if(isNaN(n) || !Number.isInteger(n)) return "Class must be an integer.";
-        if(n < 1 || n > 12) return "Class must be between 1 and 12.";
-        return "";
-    },
-    school_address: function(v) {
-        if(!v || v.trim().length < 5) return "Address must be at least 5 characters.";
-        return "";
-    },
-    phone_number: function(v) {
-        if(!v) return "Phone number required.";
-        if(!/^\d{10}$/.test(v)) return "Enter a valid 10-digit phone number.";
-        return "";
-    }
-};
-
-// ---------- Wire up live validation ----------
-document.addEventListener('DOMContentLoaded', () => {
-    const form = document.getElementById('registrationForm');
-
-    const fields = {};
-    Array.from(form.querySelectorAll('input, select, textarea')).forEach(el => {
-        if(!el.name) return;
-        fields[el.name] = el;
-        const eventName = (el.type === 'file' || el.tagName.toLowerCase()==='select') ? 'change' : 'input';
-        el.addEventListener(eventName, () => validateField(el));
-    });
-
-    function validateField(el) {
-        const name = el.name;
-        let msg = (name === 'photo') ? validators.photo(el) : validators[name](el.value);
-        const wrapper = el.closest('.field-wrapper');
-        const errorDiv = document.getElementById('error-' + name);
-        if(msg) {
-            errorDiv.textContent = msg;
-            wrapper.classList.remove('field-valid');
-            wrapper.classList.add('field-invalid');
-        } else {
-            errorDiv.textContent = "";
-            wrapper.classList.remove('field-invalid');
-            wrapper.classList.add('field-valid');
-        }
-        return msg === "";
-    }
-
-    // ✅ Final submit
-    form.addEventListener('submit', (e) => {
-        let ok = true;
-        for(const n in fields) {
-            const el = fields[n];
-            const valid = validateField(el);
-            if(!valid) ok = false;
-        }
-        if(!ok) {
-            const firstInvalid = document.querySelector('.field-invalid');
-            if(firstInvalid) firstInvalid.scrollIntoView({behavior:'smooth', block:'center'});
-            return;
-        }
-
-        // ✅ ab actual Django ko submit hoga & redirect hoga
-        form.submit();
-    });
-});
-
-function closeSuccess() {
-    const popup = document.getElementById('successMessage');
-    popup.classList.add('hidden');
-    popup.classList.remove('show');
-}
-</script>
-
-</body>
-</html>
+{% endblock %}

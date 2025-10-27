@@ -1,0 +1,113 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Shiksha Sarathi{% endblock %}</title>
+   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+
+<header>
+    <nav class="container"> 
+        <div class="logo-container">
+            <a href="{% url 'home' %}" style="display: flex; align-items: center; text-decoration: none;">
+                <div class="logo-image-placeholder">
+                    <i class="fas fa-graduation-cap"></i> 
+                </div>
+                <span class="logo-text">Shiksha Sarathi</span>
+            </a>
+        </div>
+        
+        <button class="menu-toggle" id="menuToggle" aria-label="Toggle navigation menu">
+            &#9776; 
+        </button>
+
+        <div class="nav-right" id="navbarNav">
+            <a href="{% url 'home' %}" class="{% if request.resolver_match.url_name == 'home' %}active{% endif %}">Home</a>
+            <a href="{% url 'about' %}" class="{% if request.resolver_match.url_name == 'about' %}active{% endif %}">About Us</a> 
+            <a href="{% url 'courses' %}" class="{% if request.resolver_match.url_name == 'courses' %}active{% endif %}">Courses</a>
+            <a href="{% url 'materials' %}" class="{% if request.resolver_match.url_name == 'materials' %}active{% endif %}">Materials</a>
+            <a href="{% url 'lectures' %}">Live Lectures</a>
+            <a href="{% url 'register' %}" class="btn-nav">Register</a>
+        </div>
+    </nav>
+</header>
+<main>
+    {% block content %}  {% endblock %}
+</main>
+<footer class="main-footer">
+    <div class="container footer-grid">
+        
+        <div class="footer-column brand-info">
+            <a href="{% url 'home' %}" class="footer-logo">Shiksha Sarathi</a>
+            <p class="tagline">Expert Guidance by Sushil Sir. Dedicated to Your Success.</p>
+            <div class="social-links">
+                <a href="https://facebook.com/yourpage" target="_blank" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                <a href="https://instagram.com/yourhandle" target="_blank" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                <a href="https://youtube.com/yourchannel" target="_blank" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+                <a href="https://linkedin.com/yourprofile" target="_blank" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+            </div>
+        </div>
+
+        <div class="footer-column">
+            <h4>Quick Links</h4>
+            <ul>
+                <li><a href="{% url 'home' %}">Home</a></li>
+                <li><a href="{% url 'about' %}">About Us</a></li>
+                <li><a href="{% url 'register' %}">Enroll Now</a></li>
+                <li><a href="{% url 'contact' %}">Contact Us</a></li> 
+                <li><a href="#">Privacy Policy</a></li>
+            </ul>
+        </div>
+
+        <div class="footer-column">
+            <h4>Study Resources</h4>
+            <ul>
+                <li><a href="{% url 'courses' %}">All Courses</a></li>
+                <li><a href="{% url 'materials' %}">Study Materials</a></li>
+                <li><a href="{% url 'lectures' %}">Live Classes</a></li>
+                <li><a href="#">Test Series</a></li>
+            </ul>
+        </div>
+
+        <div class="footer-column contact-info">
+            <h4>Our Branches</h4>
+            
+            <p style="font-weight: 600; color: #ff6b6b; margin-bottom: 5px;">Branch 1 (Doomari):</p>
+            <p><i class="fas fa-map-marker-alt"></i> Ahirauli Bazar, Doomari</p>
+            
+            <p style="font-weight: 600; color: #ff6b6b; margin-bottom: 5px; margin-top: 15px;">Branch 2 (Kasia):</p>
+            <p><i class="fas fa-map-marker-alt"></i> Abhinandan Gli, Behind Style Bazar Kasia</p>
+
+            <h4 style="margin-top: 30px;">Contact Details</h4>
+            <p><i class="fas fa-phone"></i> +91 98765 43210 (Admissions)</p>
+            <p><i class="fas fa-envelope"></i> support@shikshasarathi.com</p>
+            <p><i class="fas fa-clock"></i> Mon - Sat: 9:00 AM - 6:00 PM</p>
+        </div>
+
+    </div>
+
+    <div class="footer-bottom">
+        <div class="container">
+            <p>&copy; 2025 Shiksha Sarathi. All Rights Reserved. | Developed with Dedication <i class="fas fa-heart"></i></p>
+        </div>
+    </div>
+</footer>
+
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+<script>
+    AOS.init({
+        duration: 1000, 
+        once: true,      
+    });
+</script>
+<script src="{% static 'js/script.js' %}"></script>
+</body>
+</html>

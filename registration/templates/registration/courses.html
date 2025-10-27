@@ -1,71 +1,239 @@
-{% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Courses - Shiksh Sarathi</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-gray-50 text-gray-800">
+{% extends 'registration/base.html' %}
 
-<header class="bg-white shadow">
-  <div class="container mx-auto px-6 py-4 flex items-center justify-between">
-    <div class="text-2xl font-bold text-blue-600">Shiksh Sarathi</div>
-    <nav class="space-x-4 hidden md:block">
-      <a href="{% url 'home' %}" class="text-gray-700 hover:text-blue-600">Home</a>
-      <a href="{% url 'courses' %}" class="text-blue-600 font-semibold">Courses</a>
-      <a href="{% url 'materials' %}" class="text-gray-700 hover:text-blue-600">Materials</a>
-      <a href="{% url 'register' %}" class="text-white bg-blue-600 px-4 py-2 rounded-lg">Register</a>
-      <a href="{% url 'contact' %}" class="text-gray-700 hover:text-blue-600">Contact</a>
-    </nav>
-  </div>
-</header>
+{% block title %}Our Pathways to Mastery | Tech & Design{% endblock %}
 
-<section class="container mx-auto px-6 py-12">
-  <h1 class="text-3xl font-bold mb-6 text-gray-900">Our Courses</h1>
-  
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-    {% for course in courses %}
-      <div class="bg-white rounded-xl shadow-lg overflow-hidden flex flex-col">
-        {% if course.thumbnail %}
-          <img src="{{ course.thumbnail.url }}" alt="{{ course.title }}" class="w-full h-40 object-cover">
-        {% else %}
-          <div class="w-full h-40 bg-blue-100 flex items-center justify-center text-3xl font-bold text-blue-600">
-            {{ course.title|slice:":1" }}
-          </div>
-        {% endif %}
-        
-        <div class="p-4 flex-1 flex flex-col justify-between">
-          <div>
-            <h2 class="text-lg font-semibold text-gray-800">{{ course.title }}</h2>
-            <p class="text-gray-500 mt-1 text-sm">{{ course.short_desc }}</p>
-          </div>
-          <div class="mt-4 flex justify-between items-center">
-            <span class="text-gray-600 text-sm">Duration: {{ course.duration }}</span>
-            <span class="text-blue-600 font-semibold">₹{{ course.fee }}</span>
-          </div>
-          <div class="mt-4">
-            <a href="{% url 'course_detail' course.id %}" class="block text-center bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">View Course</a>
-          </div>
+{% block content %}
+<style>
+    /* -------------------- COURSES PAGE CSS (Mobile-First & Optimized) -------------------- */
+    
+    .courses-page {
+        padding: 60px 0; /* Reduced padding for mobile */
+        /* Background: Soft geometric pattern over a very light grey/blue gradient */
+        background: url('https://www.transparenttextures.com/patterns/cubes.png'), linear-gradient(150deg, #f7f9fc 0%, #eef3f8 100%); 
+        background-attachment: fixed;
+        min-height: 90vh;
+        overflow-x: hidden;
+    }
+
+    /* Header Styling */
+    .courses-page h1 {
+        font-size: 2.8rem; /* Mobile H1 size */
+        font-weight: 900;
+        color: #003366; /* Deep Navy Blue */
+        text-align: center;
+        margin-bottom: 10px;
+    }
+    .page-subtitle {
+        text-align: center;
+        color: #6c757d;
+        font-size: 1.1rem; /* Mobile subtitle size */
+        margin-bottom: 40px;
+        font-weight: 500;
+        display: block;
+        max-width: 95%;
+        margin: 0 auto 40px auto;
+        border-bottom: 3px solid #FFC107; /* Yellow Accent */
+        padding-bottom: 5px;
+        display: inline-block;
+    }
+
+    /* Course Grid Styling */
+    .course-grid {
+        display: grid;
+        grid-template-columns: 1fr; /* Default: Single column for mobile */
+        gap: 25px; /* Tight spacing for mobile */
+        padding: 10px;
+    }
+
+    /* Individual Course Card */
+    .course-card {
+        background-color: #ffffff;
+        border-radius: 15px; /* Mobile-friendly rounded corners */
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        padding: 0;
+        transition: all 0.4s ease-in-out;
+        border: 1px solid #dee2e6;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    /* Card Hover Effect: Subtle Lift for mobile/desktop */
+    .course-card:hover {
+        transform: translateY(-8px) scale(1.02); 
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+        border-color: #00C853; 
+    }
+
+    /* Card Image Section */
+    .card-image-container {
+        height: 150px; /* Shorter image section for mobile */
+        overflow: hidden;
+        position: relative;
+        background-color: #003366;
+    }
+    .card-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        opacity: 0.8;
+        transition: transform 0.6s ease-out;
+    }
+    .image-tag {
+        position: absolute;
+        top: 0;
+        right: 0;
+        background-color: #FFC107; /* Vibrant Yellow tag */
+        color: #003366;
+        padding: 6px 15px;
+        font-size: 0.9rem;
+        font-weight: 900;
+        clip-path: polygon(0 0, 100% 0, 100% 100%, 0 80%);
+    }
+
+    /* Card Content Section */
+    .card-content {
+        padding: 20px; /* Reduced padding for mobile */
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+    }
+    .card-content h3 {
+        font-size: 1.4rem; /* Readable H3 size for mobile */
+        color: #003366;
+        margin-bottom: 10px;
+        font-weight: 800;
+    }
+    .card-content .course-description {
+        font-size: 0.95rem; /* Highly readable body text */
+        color: #555;
+        margin-bottom: 15px;
+        line-height: 1.6;
+        flex-grow: 1; 
+    }
+    .course-branch {
+        font-size: 0.9rem;
+        color: #00C853; 
+        font-weight: 700;
+        padding: 5px 10px;
+        background-color: #E8F5E9;
+        border-radius: 6px;
+        display: inline-block;
+        border: 1px solid #00C85350;
+        margin-bottom: 10px;
+    }
+    .enroll-button {
+        display: block;
+        margin-top: auto;
+        padding: 12px 15px; /* Mobile-friendly button size */
+        border-radius: 10px;
+        background-color: #FFC107; /* Yellow CTA */
+        color: #003366;
+        font-weight: 900;
+        text-decoration: none;
+        transition: background-color 0.3s;
+        border: none;
+        box-shadow: 0 4px 10px rgba(255, 193, 7, 0.5);
+    }
+
+    /* -------------------- DESKTOP OVERRIDES -------------------- */
+    @media (min-width: 768px) {
+        .courses-page {
+            padding: 90px 0;
+        }
+        .courses-page h1 {
+            font-size: 3.8rem;
+        }
+        .page-subtitle {
+            font-size: 1.4rem;
+        }
+        .course-grid {
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); /* 3-4 cards on desktop */
+            gap: 40px;
+            padding: 20px 0;
+        }
+        .card-image-container {
+            height: 200px; /* Taller image on desktop */
+        }
+        .card-content h3 {
+            font-size: 1.8rem;
+        }
+        .card-content .course-description {
+            font-size: 1.1rem;
+        }
+    }
+</style>
+
+<section class="courses-page">
+    <div class="container">
+        <h1>Digital Skills & Tech Pathways 💡</h1>
+        <p class="page-subtitle">Master the tools of tomorrow: Coding, AI, Data Analysis, and Creative Design.</p>
+
+        <div class="course-grid">
+            {% for course in courses %}
+                <div class="course-card" data-aos="zoom-in-up" data-aos-easing="ease-out-back">
+                    <div class="card-image-container">
+                        <img src="https://picsum.photos/seed/{{ course.id }}/400/200" alt="{{ course.name }} course image" class="card-image">
+                        <span class="image-tag">{{ course.branch.name }}</span>
+                    </div>
+                    <div class="card-content">
+                        <h3>{{ course.name }}</h3>
+                        <p class="course-description">{{ course.description|truncatewords:20 }}</p>
+                        <span class="course-branch">Level: {{ course.branch.name }}</span>
+                        <a href="#" class="enroll-button">View Details & Join Now</a>
+                    </div>
+                </div>
+            {% empty %}
+                {% with dummy_courses=1 %}
+                    {% for i in "12345678" %}
+                        <div class="course-card" data-aos="zoom-in-up" data-aos-delay="{{ i|stringformat:'%s00' }}" data-aos-easing="ease-out-back">
+                            <div class="card-image-container">
+                                <img src="https://picsum.photos/seed/{{ i }}/400/200" alt="Course image" class="card-image">
+                                <span class="image-tag">
+                                    {% if i == "1" or i == "5" %}AI/DATA{% elif i == "2" or i == "3" %}CODING{% elif i == "4" or i == "8" %}DESIGN/TOOLS{% else %}MATHS/LOGIC{% endif %}
+                                </span>
+                            </div>
+                            <div class="card-content">
+                                {% if i == "1" %}
+                                    <h3>Advanced AI Tools & Prompt Engineering</h3>
+                                    <p class="course-description">Learn to harness generative AI (ChatGPT, Midjourney) for academic projects, research, and coding assistance. Focus on effective prompting.</p>
+                                    <span class="course-branch">Level: Intermediate</span>
+                                {% elif i == "2" %}
+                                    <h3>Python Programming & Data Structures</h3>
+                                    <p class="course-description">Master Python fundamentals and core data structures. Build a strong foundation for competitive coding and university-level computer science.</p>
+                                    <span class="course-branch">Level: Beginner/Inter.</span>
+                                {% elif i == "3" %}
+                                    <h3>C++ and System Logic</h3>
+                                    <p class="course-description">A deep dive into C++ syntax, memory management, and system logic. Essential preparation for engineering and competitive programming exams.</p>
+                                    <span class="course-branch">Level: Advanced</span>
+                                {% elif i == "4" %}
+                                    <h3>Canva Design & Visual Communication</h3>
+                                    <p class="course-description">Learn professional design principles using Canva. Create stunning presentations, social media graphics, and academic posters quickly and effectively.</p>
+                                    <span class="course-branch">Level: Beginner</span>
+                                {% elif i == "5" %}
+                                    <h3>Data Analysis with Excel & Sheets</h3>
+                                    <p class="course-description">Master essential data management, visualization, and analytical techniques using Microsoft Excel and Google Sheets. A crucial professional skill.</p>
+                                    <span class="course-branch">Level: Intermediate</span>
+                                {% elif i == "6" %}
+                                    <h3>Foundational Math Mastery (Grades 9-10)</h3>
+                                    <p class="course-description">Comprehensive coverage of core topics: Geometry, Trigonometry, and Algebra fundamentals. Build a rock-solid base for all future STEM studies.</p>
+                                    <span class="course-branch">Level: School Focus</span>
+                                {% elif i == "7" %}
+                                    <h3>Analytical Logic & Problem Solving</h3>
+                                    <p class="course-description">Develop critical reasoning and advanced problem-solving techniques essential for aptitude tests and complex academic challenges. A mind-booster.</p>
+                                    <span class="course-branch">Level: All Grades</span>
+                                {% else %}
+                                    <h3>Digital Portfolio & Resume Building</h3>
+                                    <p class="course-description">A practical workshop on building a professional online portfolio, creating effective resumes, and mastering digital branding for college applications.</p>
+                                    <span class="course-branch">Level: Professional Dev.</span>
+                                {% endif %}
+                                <a href="#" class="enroll-button">View Details & Join Now</a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% endwith %}
+            {% endfor %}
         </div>
-      </div>
-    {% empty %}
-      <div class="text-gray-500 col-span-full text-center py-10">
-        No courses added yet — please check back later.
-      </div>
-    {% endfor %}
-  </div>
-</section>
-
-<footer class="bg-white border-t mt-12">
-  <div class="container mx-auto px-6 py-8 text-gray-600 flex flex-col md:flex-row justify-between gap-4">
-    <div>© 2025 Shiksh Sarathi. All rights reserved.</div>
-    <div>
-      <a href="{% url 'contact' %}" class="text-blue-600 hover:underline">Contact Us</a>
     </div>
-  </div>
-</footer>
-
-</body>
-</html>
+</section>
+{% endblock %}

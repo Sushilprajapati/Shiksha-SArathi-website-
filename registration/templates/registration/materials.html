@@ -1,0 +1,240 @@
+{% extends 'registration/base.html' %}
+
+{% block title %}Study Resources | Shiksha Sarathi (Animated){% endblock %}
+
+{% block content %}
+<style>
+    /* -------------------- KEYFRAME ANIMATION DEFINITION -------------------- */
+    /* Subtle pulsing effect remains */
+    @keyframes pulseShadow {
+        0% { box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); }
+        50% { box-shadow: 0 6px 15px rgba(25, 118, 210, 0.2), 0 0 5px rgba(25, 118, 210, 0.1); } /* Light blue glow */
+        100% { box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); }
+    }
+
+    /* -------------------- GENERAL & MOBILE STYLING (FLEXBOX) -------------------- */
+    
+    .container {
+        padding-left: 15px;
+        padding-right: 15px;
+        margin: 0 auto;
+        width: 100%; 
+        max-width: 1400px; 
+    }
+
+    .materials-page {
+        padding: 60px 0;
+        background: url('https://www.transparenttextures.com/patterns/clean-gray-paper.png'), #f8f9fa;
+        min-height: 90vh;
+        overflow-x: hidden;
+    }
+
+    /* Header Styling */
+    .materials-page h1 {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: #1A237E;
+        text-align: center;
+        margin-bottom: 5px;
+    }
+    .page-subtitle {
+        text-align: center;
+        color: #6c757d;
+        font-size: 1.1rem;
+        margin-bottom: 40px;
+        display: block;
+        max-width: 90%;
+        margin: 0 auto 40px auto;
+        border-bottom: 3px solid #FFC107;
+        padding-bottom: 5px;
+        display: inline-block;
+    }
+
+    /* Materials Layout (Using Flexbox for stability) */
+    .materials-list {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 25px; 
+        padding: 10px;
+    }
+
+    /* Individual Material Card (Flexbox Item) */
+    .material-card {
+        width: 100%; 
+        min-width: 280px;
+        max-width: 400px; 
+        
+        background-color: #ffffff;
+        border-radius: 12px;
+        /* Initial Box Shadow & Animation Start */
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); 
+        animation: pulseShadow 4s infinite ease-in-out;
+        padding: 20px;
+        /* Increased transition time and property for smoother motion */
+        transition: all 0.5s cubic-bezier(0.25, 0.8, 0.25, 1); 
+        border-left: 5px solid #1A237E;
+        display: flex;
+        flex-direction: column;
+        cursor: pointer; /* Indicates it's clickable */
+    }
+    
+    /* 🌟 Enhanced Hover Effect: Lift, Rotate, and Stronger Shadow 🌟 */
+    .material-card:hover {
+        transform: translateY(-10px) scale(1.02) rotateZ(1deg); /* Lift, Scale, and Rotate */
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3), 0 0 10px #FFC107; /* Very strong shadow */
+        border-left-color: #00C853; 
+        animation: none; 
+    }
+
+    /* 💥 New: Active (Click) Effect 💥 */
+    .material-card:active {
+        transform: translateY(-2px) scale(0.99); /* Deep press effect */
+        box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2); 
+    }
+    
+    /* Card Content */
+    .material-card h3 {
+        font-size: 1.4rem;
+        color: #1A237E;
+        margin-bottom: 8px;
+        font-weight: 700;
+        transition: color 0.3s;
+    }
+    .material-card:hover h3 {
+        color: #00C853;
+    }
+
+    /* Download Link Styling */
+    .material-card a[download] {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 12px 15px;
+        border-radius: 8px;
+        background-color: #00C853; 
+        color: white;
+        text-decoration: none;
+        font-weight: 700;
+        transition: background-color 0.3s, transform 0.2s, box-shadow 0.3s;
+        width: 100%;
+        margin-top: 15px;
+        box-shadow: 0 4px 8px rgba(0, 200, 83, 0.4);
+    }
+    .material-card a[download]:hover {
+        background-color: #00a042;
+        transform: scale(1.02);
+        box-shadow: 0 6px 12px rgba(0, 200, 83, 0.6);
+    }
+    .material-card a[download]::before {
+        content: "\f019";
+        font-family: 'Font Awesome 6 Free';
+        font-weight: 900;
+        margin-right: 8px;
+    }
+
+    /* Video Player Styling */
+    .material-card video {
+        width: 100%;
+        max-height: 250px;
+        border-radius: 8px;
+        margin-top: 15px;
+        background-color: #000;
+        border: 2px solid #1A237E;
+    }
+    
+    /* -------------------- DESKTOP FIX (FLEXBOX Width Calculation) -------------------- */
+    @media (min-width: 768px) {
+        .materials-page {
+            padding: 80px 0;
+        }
+        .materials-page h1 {
+            font-size: 3.5rem;
+        }
+        .materials-list {
+            gap: 30px;
+        }
+        
+        /* Three Cards per Row for Laptops */
+        .material-card {
+            width: calc(33.33% - 20px); 
+        }
+    }
+    
+    /* Large Desktop Screens (4 Cards per Row) */
+    @media (min-width: 1200px) {
+        .materials-list {
+            gap: 40px;
+        }
+        .material-card {
+            width: calc(25% - 30px); 
+        }
+    }
+</style>
+
+<section class="materials-page">
+    <div class="container">
+        <h1>Study Materials & Resources 📚</h1>
+        <p class="page-subtitle">Access your downloadable notes, practice sheets, and video lectures here.</p>
+
+        <div class="materials-list">
+            {% for material in materials %}
+            <div class="material-card" data-aos="fade-up">
+                <h3>{{ material.title }}</h3>
+                <p>{{ material.description|truncatewords:30 }}</p>
+                
+                {% if material.file %}
+                    <a href="{{ material.file.url }}" download>Download Resource</a>
+                {% endif %}
+                
+                {% if material.video %}
+                    <video controls>
+                        <source src="{{ material.video.url }}" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                {% endif %}
+            </div>
+            {% empty %}
+            <div class="materials-list">
+                {% for i in "123456" %}
+                    <div class="material-card" data-aos="fade-up" data-aos-delay="{{ i|stringformat:'%s00' }}">
+                        {% if i == "1" %}
+                            <h3>Advanced Calculus Practice Sheet</h3>
+                            <p>A comprehensive set of challenging problems on differentiation, integration, and applications of calculus. Download the PDF now!</p>
+                            <a href="#" download>Download PDF (1.5 MB)</a>
+                        {% elif i == "2" %}
+                            <h3>Python Data Structures Video Lecture</h3>
+                            <p>Video lecture covering lists, tuples, dictionaries, and sets in Python. Watch the full lecture for competitive coding insights.</p>
+                            <video controls>
+                                <source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4">
+                                Your browser does not support the video tag.
+                            </video>
+                        {% elif i == "3" %}
+                            <h3>AI Tools for Students: Ebook</h3>
+                            <p>An essential guide on using the best AI tools for research, essay writing, and complex problem-solving in STEM fields.</p>
+                            <a href="#" download>Download Ebook (2.1 MB)</a>
+                        {% elif i == "4" %}
+                            <h3>Algebra Fundamentals Q&A</h3>
+                            <p>Quick revision notes and frequently asked questions on linear equations, quadratic equations, and polynomial factorization.</p>
+                            <a href="#" download>Download Notes (500 KB)</a>
+                        {% elif i == "5" %}
+                            <h3>Web Dev Project Walkthrough (Video)</h3>
+                            <p>A step-by-step video tutorial on building a fully responsive landing page using modern HTML and CSS techniques.</p>
+                            <video controls>
+                                <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" type="video/mp4">
+                                Your browser does not support the video tag.
+                            </video>
+                        {% else %}
+                            <h3>Competitive Exam Logic Puzzles</h3>
+                            <p>A compilation of 50 challenging logic and analytical reasoning puzzles designed to sharpen your mind for entrance and aptitude tests.</p>
+                            <a href="#" download>Download Practice Set</a>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+            <p class="page-subtitle">No materials have been uploaded yet. Please check back soon!</p>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endblock %}

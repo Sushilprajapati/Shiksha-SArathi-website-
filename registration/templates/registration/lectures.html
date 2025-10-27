@@ -1,0 +1,207 @@
+{% extends 'registration/base.html' %} 
+
+{% block title %}Live Lectures & Webinars 🔴{% endblock %}
+
+{% block content %}
+<style>
+    /* -------------------- KEYFRAME ANIMATIONS -------------------- */
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes pulse {
+        0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 0, 0, 0.7); }
+        70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(255, 0, 0, 0); }
+        100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 0, 0, 0); }
+    }
+
+    /* -------------------- GENERAL & LAYOUT -------------------- */
+    .lectures-section {
+        padding: 60px 20px;
+        background-color: #f8f9fa; /* Light background */
+        min-height: 80vh;
+        animation: fadeIn 1s ease-out;
+    }
+    .lectures-section h2 {
+        font-size: 2.8rem;
+        font-weight: 800;
+        color: #1A237E; /* Deep Blue */
+        text-align: center;
+        margin-bottom: 40px;
+        position: relative;
+    }
+    .lectures-section h2::after {
+        content: '';
+        display: block;
+        width: 100px;
+        height: 4px;
+        background-color: #FF5722; /* Orange accent */
+        margin: 10px auto 0;
+        border-radius: 2px;
+    }
+
+    /* Lecture Grid (Flexbox for modern layout) */
+    .lecture-grid {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 30px; /* Space between cards */
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0;
+        list-style: none;
+    }
+
+    /* -------------------- LECTURE CARD STYLING -------------------- */
+    .lecture-card {
+        background-color: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        padding: 25px;
+        width: 100%;
+        max-width: 350px;
+        /* Animation & Hover */
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        border-left: 5px solid #1A237E; /* Primary color side border */
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+    .lecture-card:hover {
+        transform: translateY(-8px) scale(1.02); /* Lift and slight zoom */
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        border-left-color: #FF5722; /* Change accent color on hover */
+    }
+
+    /* Title and Details */
+    .lecture-card h3 {
+        font-size: 1.5rem;
+        color: #1A237E;
+        margin-bottom: 15px;
+        font-weight: 700;
+    }
+    .lecture-details {
+        font-size: 0.95rem;
+        color: #6c757d;
+        margin-bottom: 20px;
+    }
+    .lecture-details p {
+        margin: 5px 0;
+        display: flex;
+        align-items: center;
+    }
+    .lecture-details i {
+        color: #FF5722; /* Icon color */
+        margin-right: 10px;
+        font-size: 1.1rem;
+    }
+
+    /* Join Button (Call to Action) */
+    .join-link {
+        display: block;
+        text-align: center;
+        padding: 12px 20px;
+        border-radius: 8px;
+        background-color: #FF5722; /* Orange CTA */
+        color: white;
+        text-decoration: none;
+        font-weight: 700;
+        margin-top: auto; /* Push button to the bottom */
+        transition: background-color 0.3s, transform 0.2s, box-shadow 0.3s;
+        
+        /* Live Indicator Effect */
+        position: relative;
+        z-index: 1;
+    }
+    .join-link:hover {
+        background-color: #e64a19;
+        transform: scale(1.05);
+        box-shadow: 0 5px 15px rgba(255, 87, 34, 0.5);
+    }
+    
+    /* Live Now Indicator */
+    .live-indicator {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        color: #FF5722;
+        font-weight: 700;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+    }
+    .live-dot {
+        height: 10px;
+        width: 10px;
+        background-color: #FF0000;
+        border-radius: 50%;
+        margin-right: 5px;
+        animation: pulse 1.5s infinite;
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 50px;
+        background-color: #e3f2fd; /* Very light blue */
+        border-radius: 10px;
+        margin-top: 40px;
+        color: #1A237E;
+        font-size: 1.2rem;
+        font-weight: 600;
+    }
+
+    /* -------------------- RESPONSIVE LAYOUT -------------------- */
+    @media (min-width: 768px) {
+        .lecture-card {
+            width: calc(50% - 15px); /* Two columns */
+        }
+    }
+    @media (min-width: 1024px) {
+        .lecture-card {
+            width: calc(33.333% - 20px); /* Three columns */
+        }
+    }
+</style>
+
+<section class="lectures-section">
+    <div class="container">
+        <h2>Live Lectures & Interactive Webinars 🔴</h2>
+
+        <ul class="lecture-grid">
+            {% for lecture in lectures %}
+                <li class="lecture-card" data-aos="fade-up" data-aos-delay="{{ forloop.counter0|stringformat:'%s00' }}">
+                    {% if lecture.is_live %}
+                        <div class="live-indicator">
+                            <span class="live-dot"></span> 
+                            LIVE NOW
+                        </div>
+                    {% endif %}
+
+                    <h3>{{ lecture.title }}</h3>
+                    
+                    <div class="lecture-details">
+                        <p><i class="fas fa-calendar-alt"></i> Date: **{{ lecture.schedule_time|date:"d M Y" }}**</p>
+                        <p><i class="fas fa-clock"></i> Time: **{{ lecture.schedule_time|date:"H:i A" }}** IST</p>
+                        {% if lecture.speaker %}
+                            <p><i class="fas fa-user-tie"></i> Speaker: **{{ lecture.speaker }}**</p>
+                        {% endif %}
+                        {% if lecture.topic_description %}
+                            <p><i class="fas fa-book-open"></i> Topic: {{ lecture.topic_description|truncatechars:50 }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <a href="{{ lecture.lecture_link }}" class="join-link" target="_blank">
+                        <i class="fas fa-external-link-alt"></i> Join Lecture Now
+                    </a>
+                </li>
+            {% empty %}
+                <div class="empty-state">
+                    <i class="fas fa-bell-slash"></i>
+                    <p>No new live lectures are currently scheduled. Please check back soon!</p>
+                </div>
+            {% endfor %}
+        </ul>
+    </div>
+</section>
+{% endblock %}
