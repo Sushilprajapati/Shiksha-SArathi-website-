@@ -1,16 +1,26 @@
 from pathlib import Path
 import os
+import dj_database_url  # डेटाबेस के लिए
+from whitenoise.storage import CompressedManifestStaticFilesStorage # Static फाइलें ठीक करने के लिए
 
 # Base directory
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-7lv5mf@px-1w*qkrc+5_kcja@j!f&nh6j20o@=b0^@#6eo!gqt'
+# --- 1. सुरक्षा और होस्टिंग सेटिंग्स (Production Ready) ---
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# SECRET_KEY को एन्वायरनमेंट वेरिएबल से लें (सबसे सुरक्षित)
+SECRET_KEY = os.environ.get(
+    'SECRET_KEY', 
+    'django-insecure-7lv5mf@px-1w*qkrc+5_kcja@j!f&nh6j20o@=b0^@#6eo!gqt' # लोकल उपयोग के लिए डिफ़ॉल्ट
+)
 
-ALLOWED_HOSTS = []
+# DEBUG सेटिंग को भी एन्वायरनमेंट वेरिएबल से लें। Render पर यह False होगा।
+DEBUG = os.environ.get('DEBUG') == 'True' 
+
+# ALLOWED_HOSTS को एन्वायरनमेंट वेरिएबल से लें।
+# Render पर यह Render का URL होगा, लोकल में '*' या 'localhost' होगा।
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '*').split(',')
+
 
 # Application definition
 INSTALLED_APPS = [
@@ -25,6 +35,8 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    # WhiteNoise को यहाँ जोड़ें (Static फ़ाइल की समस्या ठीक करने के लिए)
+    'whitenoise.middleware.WhiteNoiseMiddleware', 
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -53,15 +65,28 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'competition_site.wsgi.application'
 
-# Database
+
+# --- 2. डायनामिक डेटाबेस कॉन्फ़िगरेशन (PostgreSQL/SQLite) ---
+
+# DATABASE_URL को एन्वायरनमेंट वेरिएबल से लें
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    'default': dj_database_url.config(
+        default=os.environ.get('DATABASE_URL'),
+        conn_max_age=600  # कनेक्शन को सक्रिय रखता है
+    )
 }
 
-# Password validation
+# यदि DATABASE_URL सेट नहीं है (जैसे लोकल डेवलपमेंट में), तो SQLite का उपयोग करें
+if not os.environ.get('DATABASE_URL'):
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
+
+
+# Password validation (No change needed)
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -77,16 +102,30 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-# Internationalization
+# Internationalization (No change needed)
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_L10N = True
 USE_TZ = True
 
-# Static files (CSS, JavaScript, Images)
+# --- 3. स्टैटिक फ़ाइल सेटिंग्स (WhiteNoise Fix) ---
+
+# STATIC_URL: URL जहाँ से ब्राउज़र स्टैटिक फ़ाइलें लोड करेगा
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
+
+# STATIC_ROOT: वह फ़ोल्डर जहाँ 'python manage.py collectstatic' सभी फ़ाइलों को कॉपी करेगा।
+STATIC_ROOT = BASE_DIR / 'staticfiles' 
+
+# STATICFILES_DIRS: वह फ़ोल्डर जहाँ Django लोकल में स्टैटिक फ़ाइलों को ढूँढता है।
+STATICFILES_DIRS = [
+    BASE_DIR / "static", 
+]
+
+# WhiteNoise का उपयोग करके Static फ़ाइलों को प्रबंधित करें (समस्या का समाधान)
+# यह Static फ़ाइल URL में एक कंटेंट हैश जोड़कर कैशिंग को ठीक करता है।
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
 
 # Media files (uploads like photos, PDFs)
 MEDIA_URL = '/media/'
@@ -95,20 +134,22 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# --- 4. अन्य कॉन्फ़िगरेशन (सिक्योरिटी के लिए एनवायरनमेंट वेरिएबल का उपयोग) ---
+
 # Razorpay configuration
-RAZORPAY_KEY_ID = 'rzp_test_RWCModYNZjsvEz'
-RAZORPAY_KEY_SECRET = 'wX1JeMNbVY307k6MOakrmu2d'
+RAZORPAY_KEY_ID = os.environ.get('RAZORPAY_KEY_ID', 'rzp_test_RWCModYNZjsvEz') 
+RAZORPAY_KEY_SECRET = os.environ.get('RAZORPAY_KEY_SECRET', 'wX1JeMNbVY307k6MOakrmu2d')
 
-# Email configuration (optional, for contact form)
+# Email configuration 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'your-email@gmail.com'  # replace with your Gmail
-EMAIL_HOST_PASSWORD = 'your-app-password'  # replace with Gmail app password
+EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
+# Port को integer में बदलें
+try:
+    EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 587))
+except ValueError:
+    EMAIL_PORT = 587
+    
+EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True') == 'True'
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', 'your-email@gmail.com')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', 'your-app-password')
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
-
-# settings.py ke end me ya static settings ke niche
-STATIC_ROOT = BASE_DIR / 'staticfiles'  # yeh folder django khud create kar dega
-STATIC_URL = '/static/'
-STATICFILES_DIRS = [BASE_DIR / "static"]
