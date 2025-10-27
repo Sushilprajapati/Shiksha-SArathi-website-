@@ -19,7 +19,7 @@ DEBUG = os.environ.get('DEBUG') == 'True'
 
 # ALLOWED_HOSTS को एन्वायरनमेंट वेरिएबल से लें।
 # Render पर यह Render का URL होगा, लोकल में '*' या 'localhost' होगा।
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '*').split(',')
+ALLOWED_HOSTS = ['shiksha-sarathi-website.onrender.com',]
 
 
 # Application definition
