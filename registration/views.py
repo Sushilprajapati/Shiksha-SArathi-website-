@@ -1,7 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.conf import settings
 from django.contrib import messages
-# ContactMessage मॉडल को इम्पोर्ट करना सुनिश्चित करें
 from .models import Course, Participant, StudyMaterial, LiveLecture, ContactMessage, Testimonial 
 import razorpay
 import json
@@ -42,14 +41,15 @@ def courses_view(request):
     return render(request, 'registration/courses.html', context)
 
 #-----------------------------------------------------------
-# 3. Registration View (UPDATED for direct access)
+# 3. Registration View (UPDATED)
+# यह फंक्शन अब course_id=None होने पर भी रजिस्ट्रेशन पेज दिखाएगा
 #-----------------------------------------------------------
 def register_view(request, course_id=None): 
     course = None
     # सारे एक्टिव कोर्स को fetch करें (ड्रॉपडाउन के लिए)
     course_list = Course.objects.filter(is_active=True).order_by('name')
 
-    # अगर course_id URL में मौजूद है, तो उस कोर्स को fetch करें
+    # 1. URL से course_id मिला
     if course_id:
         course = get_object_or_404(Course, id=course_id)
     
@@ -71,7 +71,7 @@ def register_view(request, course_id=None):
         # POST data से कोर्स ID प्राप्त करें (फॉर्म से)
         posted_course_id = request.POST.get('course') 
         
-        # कोर्स सुनिश्चित करें: अगर course URL से नहीं मिला, तो POST data का उपयोग करें।
+        # 2. कोर्स सुनिश्चित करें: अगर course URL से नहीं मिला, तो POST data का उपयोग करें।
         if not course and posted_course_id:
             try:
                 course = Course.objects.get(id=posted_course_id)
@@ -81,13 +81,13 @@ def register_view(request, course_id=None):
                 context = {'course_list': course_list, 'course': None}
                 return render(request, 'registration/register.html', context)
         
-        # अंतिम चेक: अगर कोर्स अभी भी None है, तो error दें और फॉर्म फिर से दिखाएँ
+        # 3. अंतिम चेक: अगर कोर्स अभी भी None है, तो error दें और फॉर्म फिर से दिखाएँ
         if not course:
             messages.error(request, "Please select a course to complete registration.")
             context = {'course_list': course_list, 'course': None}
             return render(request, 'registration/register.html', context)
             
-        # Participant ऑब्जेक्ट बनाएं
+        # 4. Participant ऑब्जेक्ट बनाएं
         registration = Participant.objects.create(
             registered_course=course,
             full_name=full_name,
@@ -98,6 +98,7 @@ def register_view(request, course_id=None):
             school_name=school_name, 
             school_class=school_class, 
             school_address=school_address, 
+            # Note: Photo field is skipped here for simplicity in manual POST handling
         )
         
         return redirect('payment_view', registration_id=registration.id)
@@ -136,7 +137,6 @@ def payment_view(request, registration_id):
     try:
         razorpay_order = razorpay_client.order.create(data=order_data)
         
-        # ऑर्डर ID को Participant मॉडल में सेव करें
         registration.razorpay_order_id = razorpay_order['id']
         registration.save() 
 
@@ -170,7 +170,6 @@ def payment_status_view(request):
             
             razorpay_client = razorpay.Client(auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET))
 
-            # Signature verify करें
             params_dict = {
                 'razorpay_order_id': razorpay_order_id,
                 'razorpay_payment_id': razorpay_payment_id,
@@ -178,7 +177,6 @@ def payment_status_view(request):
             }
             razorpay_client.utility.verify_payment_signature(params_dict)
 
-            # Verification सफल: Participant ऑब्जेक्ट को order ID से ढूंढें और अपडेट करें
             registration = Participant.objects.get(razorpay_order_id=razorpay_order_id)
             
             registration.payment_completed = True
@@ -232,7 +230,7 @@ def contact_view(request):
                     message=message
                 )
                 messages.success(request, "Thank you! Your message has been sent successfully.")
-                return redirect('thank_you_view') # Changed to correct view name
+                return redirect('thank_you_view') 
             else:
                 messages.error(request, "Please fill out your name and message.")
         
@@ -240,7 +238,7 @@ def contact_view(request):
             messages.error(request, "An error occurred while sending your message.")
             print(f"Contact form submission error: {e}")
 
-    context = {} # Defined context
+    context = {} 
     return render(request, 'registration/contact.html', context)
 
 #-----------------------------------------------------------
@@ -265,11 +263,10 @@ def lectures_view(request):
     return render(request, 'registration/lectures.html', context)
 
 #-----------------------------------------------------------
-# 9. Testimonials View (नया जोड़ा गया)
+# 9. Testimonials View 
 #-----------------------------------------------------------
 def testimonials_view(request):
     try:
-        # Testimonial मॉडल से डेटा fetch करें
         testimonials = Testimonial.objects.filter(is_approved=True).order_by('-created_at') 
     except Exception as e:
         print(f"Database error in testimonials_view: {e}")
@@ -278,7 +275,6 @@ def testimonials_view(request):
     context = {
         'testimonials': testimonials
     }
-    # सुनिश्चित करें कि आपके पास 'registration/testimonials.html' template file मौजूद है
     return render(request, 'registration/testimonials.html', context)
 
 
@@ -286,14 +282,13 @@ def testimonials_view(request):
 # 10. Utility Views
 #-----------------------------------------------------------
 def failure_view(request):
-    context = {} # Defined context
+    context = {} 
     return render(request, 'registration/failure.html', context)
 
 def about_sir_view(request):
-    # FIX 2: Defined context = {}
     context = {} 
     return render(request, 'registration/about.html', context)
     
 def thank_you_view(request):
-    context = {} # Defined context
+    context = {} 
     return render(request, 'registration/thank_you.html', context)
