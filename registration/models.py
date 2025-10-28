@@ -11,7 +11,7 @@ GENDER_CHOICES = [
 # ===== Branch =====
 class Branch(models.Model):
     name = models.CharField(max_length=150)
-    address = models.TextField() # Removed default string value
+    address = models.TextField() 
     phone = models.CharField(max_length=20, blank=True)
     map_embed = models.TextField(blank=True, help_text="Optional iframe embed or Google Maps link")
 
@@ -35,7 +35,7 @@ class Course(models.Model):
     class Meta:
         ordering = ['name']
 
-# ===== Participant (Updated to be mandatory where needed) =====
+# ===== Participant =====
 class Participant(models.Model):
     full_name = models.CharField(max_length=100)
     dob = models.DateField()
@@ -52,9 +52,6 @@ class Participant(models.Model):
 
     payment_completed = models.BooleanField(default=False)
     razorpay_order_id = models.CharField(max_length=100, blank=True, null=True)
-    # The course selection is handled in the form submission process (views/forms), 
-    # but often a registration needs to be linked to a course. 
-    # I'll add a ForeignKey here for completeness.
     registered_course = models.ForeignKey(Course, on_delete=models.SET_NULL, null=True, blank=True)
 
 
@@ -63,7 +60,6 @@ class Participant(models.Model):
 
     class Meta:
         verbose_name_plural = "Participants"
-        # Optional: Prevents same name/phone number from registering twice
         unique_together = ('phone_number', 'full_name') 
 
 
@@ -97,3 +93,14 @@ class ContactMessage(models.Model):
 
     def __str__(self):
         return f"{self.name} - {self.created_at.strftime('%Y-%m-%d')}"
+
+# ===== Testimonial (Missing Model Added) =====
+class Testimonial(models.Model):
+    name = models.CharField(max_length=100)
+    school_class = models.IntegerField(null=True, blank=True)
+    testimonial_text = models.TextField()
+    is_approved = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Testimonial by {self.name}"
