@@ -261,7 +261,7 @@ def failure_view(request):
 
 def about_sir_view(request):
     # 'about_view' के बजाय सही नाम का उपयोग किया गया
-    return render(request, 'registration/about_sir.html')
+    return render(request, 'registration/about.html', context)
     
 def thank_you_view(request):
     return render(request, 'registration/thank_you.html')
