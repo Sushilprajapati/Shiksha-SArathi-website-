@@ -1,119 +1,182 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import Branch, Course, StudyMaterial, LiveLecture, Participant, ContactMessage
-from .forms import ParticipantForm
 from django.conf import settings
-import razorpay # razorpay library import की गई
+from django.contrib import messages
+from .models import Course, StudentRegistration
+import razorpay
+import json
 
-# IMPORTANT FIX: Razorpay client initialization को हटा दिया गया है
-# इसे सिर्फ payment_view() के अंदर initialize करेंगे।
-# razorpay_client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+#-----------------------------------------------------------
+# Razorpay Keys (Settings से लें)
+#-----------------------------------------------------------
+RAZORPAY_KEY_ID = settings.RAZORPAY_KEY_ID
+RAZORPAY_KEY_SECRET = settings.RAZORPAY_KEY_SECRET
 
-# Home / Dashboard
+
+#-----------------------------------------------------------
+# 1. Home View
+#-----------------------------------------------------------
 def home_view(request):
+    # डेटाबेस कनेक्शन फेल होने पर क्रैश से बचने के लिए try-except
     try:
-        branches = Branch.objects.all()
-        featured_courses = Course.objects.filter(is_active=True)[:6]
-        latest_materials = StudyMaterial.objects.order_by('-published_at')[:6]
-        upcoming_lectures = LiveLecture.objects.order_by('schedule_time')[:5]
+        # अगर आप होम पेज पर कोर्स डेटा दिखाना चाहते हैं तो
+        courses = Course.objects.filter(is_active=True).order_by('-id')[:3] 
     except Exception as e:
-        # अगर कोई डेटाबेस एरर है तो कम से कम होम पेज को खाली डेटा के साथ लोड करें
-        # Production में हमेशा logs देखें।
-        print(f"Database Error in home_view: {e}") 
-        branches, featured_courses, latest_materials, upcoming_lectures = [], [], [], []
-
-    return render(request, 'registration/index.html', {
-        'branches': branches,
-        'featured_courses': featured_courses,
-        'latest_materials': latest_materials,
-        'upcoming_lectures': upcoming_lectures,
-    })
-
-# Courses Page
-def courses_view(request):
-    courses = Course.objects.filter(is_active=True)
-    return render(request, 'registration/courses.html', {'courses': courses})
-
-# about
-def about_view(request):
-    # This will render a new template: registration/about.html
-    return render(request, 'registration/about.html')
-
-# testimonial
-def testimonials_view(request):
-    # This renders the new template where you can put all testimonials
-    return render(request, 'registration/testimonials.html')
-
-# Materials Page
-def materials_view(request):
-    materials = StudyMaterial.objects.order_by('-published_at')
-    return render(request, 'registration/materials.html', {'materials': materials})
-
-# Live Lectures Page
-def lectures_view(request):
-    lectures = LiveLecture.objects.order_by('schedule_time')
-    return render(request, 'registration/lectures.html', {'lectures': lectures})
-
-# Registration
-def register_view(request):
-    if request.method == 'POST':
-        form = ParticipantForm(request.POST, request.FILES)
-        if form.is_valid():
-            participant = form.save()
-            return redirect('payment', participant_id=participant.id)
-    else:
-        form = ParticipantForm()
-    return render(request, 'registration/register.html', {'form': form})
-
-# Payment
-def payment_view(request, participant_id):
-    participant = get_object_or_404(Participant, id=participant_id)
-    
-    # FIX: Razorpay client को सिर्फ यहाँ initialize करें 
-    # इससे पूरे views.py को क्रैश होने से बचाया जा सकता है।
-    try:
-        razorpay_client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
-    except Exception as e:
-        # अगर कीज गलत हैं तो यूजर को एरर दिखाएं (या लॉग करें)
-        print(f"Razorpay Client Initialization Error: {e}")
-        # यहां एक user-friendly error page पर redirect करना बेहतर है
-        return render(request, 'registration/payment_error.html', {'error': 'Payment service is temporarily unavailable.'})
+        print(f"Database connection error in home_view: {e}")
+        courses = [] # खाली लिस्ट के साथ पेज लोड करें
         
-    if not participant.payment_completed:
-        amount_paise = 10000  # 100 INR
-        razorpay_order = razorpay_client.order.create(dict(
-            amount=amount_paise,
-            currency='INR',
-            payment_capture='1'
-        ))
-        participant.razorpay_order_id = razorpay_order['id']
-        participant.save()
-    else:
-        return redirect('thank_you')
+    context = {
+        'courses': courses
+    }
+    return render(request, 'registration/home.html', context)
 
-    return render(request, 'registration/payment.html', {
-        'participant': participant,
-        'razorpay_order': razorpay_order,
-        'razorpay_key_id': settings.RAZORPAY_KEY_ID
-    })
 
-# Payment Success (No change needed)
-def payment_success(request, participant_id):
-    participant = get_object_or_404(Participant, id=participant_id)
-    participant.payment_completed = True
-    participant.save()
-    return redirect('thank_you')
+#-----------------------------------------------------------
+# 2. Courses View
+#-----------------------------------------------------------
+def courses_view(request):
+    # डेटाबेस कनेक्शन फेल होने पर क्रैश से बचने के लिए try-except
+    try:
+        courses = Course.objects.filter(is_active=True)
+    except Exception as e:
+        print(f"Database connection error in courses_view: {e}")
+        courses = [] # खाली लिस्ट के साथ पेज लोड करें
+        
+    context = {
+        'courses': courses
+    }
+    return render(request, 'registration/courses.html', context)
 
-# Thank You Page (No change needed)
-def thank_you_view(request):
-    return render(request, 'registration/thank_you.html')
 
-# Contact (No change needed)
-def contact_view(request):
-    if request.method == 'POST':
-        name = request.POST.get('name')
+#-----------------------------------------------------------
+# 3. Registration View
+#-----------------------------------------------------------
+def register_view(request, course_id):
+    course = get_object_or_404(Course, id=course_id)
+    
+    if request.method == "POST":
+        student_name = request.POST.get('student_name')
+        father_name = request.POST.get('father_name')
         email = request.POST.get('email')
-        phone = request.POST.get('phone')
-        message = request.POST.get('message')
-        ContactMessage.objects.create(name=name, email=email, phone=phone, message=message)
-        return redirect('thank_you')
-    return render(request, 'registration/contact.html')
+        phone_number = request.POST.get('phone_number')
+        
+        # 1. Registration ऑब्जेक्ट बनाएं
+        registration = StudentRegistration.objects.create(
+            course=course,
+            student_name=student_name,
+            father_name=father_name,
+            email=email,
+            phone_number=phone_number,
+            amount=course.price 
+        )
+        
+        # 2. Payment Page पर redirect करें
+        return redirect('payment_view', registration_id=registration.id)
+    
+    context = {
+        'course': course
+    }
+    return render(request, 'registration/register.html', context)
+
+
+#-----------------------------------------------------------
+# 4. Payment View
+#-----------------------------------------------------------
+def payment_view(request, registration_id):
+    registration = get_object_or_404(StudentRegistration, id=registration_id)
+    
+    # Razorpay Client को सिर्फ इस फंक्शन के अंदर Initialize करें
+    # यह सुनिश्चित करता है कि Razorpay keys के बिना app crash न हो
+    try:
+        razorpay_client = razorpay.Client(auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET))
+    except Exception as e:
+        messages.error(request, "Payment gateway configuration error. Please contact support.")
+        print(f"Razorpay Client Initialization Error: {e}")
+        return redirect('courses_view')
+
+    # Razorpay amount expects the amount in the smallest currency unit (Paisa)
+    amount_in_paisa = int(registration.amount * 100) 
+
+    # Razorpay Order बनाएं
+    order_data = {
+        'amount': amount_in_paisa,
+        'currency': 'INR',
+        'receipt': str(registration.id),
+        'payment_capture': '1' # Auto capture the payment
+    }
+    
+    try:
+        razorpay_order = razorpay_client.order.create(data=order_data)
+        
+        # Razorpay Checkout form के लिए Context तैयार करें
+        context = {
+            'registration': registration,
+            'razorpay_order_id': razorpay_order['id'],
+            'razorpay_merchant_key': RAZORPAY_KEY_ID,
+            'amount_in_paisa': amount_in_paisa,
+            'callback_url': request.build_absolute_uri('/payment-status/'), # Status चेक करने का URL
+        }
+        return render(request, 'registration/payment.html', context)
+        
+    except Exception as e:
+        messages.error(request, "Could not create payment order. Check Razorpay keys.")
+        print(f"Razorpay Order Creation Error: {e}")
+        return redirect('register_view', course_id=registration.course.id)
+
+
+#-----------------------------------------------------------
+# 5. Payment Status View (Callback URL)
+#-----------------------------------------------------------
+def payment_status_view(request):
+    if request.method == "POST":
+        try:
+            # POST data को JSON से डिकोड करें
+            response = json.loads(request.body.decode('utf-8'))
+            
+            razorpay_payment_id = response.get('razorpay_payment_id')
+            razorpay_order_id = response.get('razorpay_order_id')
+            razorpay_signature = response.get('razorpay_signature')
+            
+            # Razorpay Client को फिर से Initialize करें
+            razorpay_client = razorpay.Client(auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET))
+
+            # Signature verify करें (सुरक्षा के लिए ज़रूरी)
+            params_dict = {
+                'razorpay_order_id': razorpay_order_id,
+                'razorpay_payment_id': razorpay_payment_id,
+                'razorpay_signature': razorpay_signature
+            }
+            razorpay_client.utility.verify_payment_signature(params_dict)
+
+            # Verification सफल: रजिस्ट्रेशन अपडेट करें
+            registration = StudentRegistration.objects.get(
+                id=razorpay_order_id.split('_')[1] # Receipt id से registration id निकालें
+            )
+            registration.payment_status = True
+            registration.razorpay_order_id = razorpay_order_id
+            registration.razorpay_payment_id = razorpay_payment_id
+            registration.save()
+            
+            messages.success(request, "Payment Successful! Your registration is complete.")
+            return redirect('success_view')
+
+        except razorpay.errors.SignatureVerificationError:
+            messages.error(request, "Payment verification failed. Invalid Signature.")
+            return redirect('failure_view')
+        except Exception as e:
+            messages.error(request, "An unknown error occurred during payment processing.")
+            print(f"Payment Status Error: {e}")
+            return redirect('failure_view')
+
+    return redirect('courses_view') # अगर GET request हो तो courses पर भेज दें
+
+#-----------------------------------------------------------
+# 6. Utility Views
+#-----------------------------------------------------------
+def success_view(request):
+    return render(request, 'registration/success.html')
+
+def failure_view(request):
+    return render(request, 'registration/failure.html')
+
+def about_sir_view(request):
+    return render(request, 'registration/about_sir.html')
