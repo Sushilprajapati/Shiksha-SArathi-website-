@@ -43,8 +43,15 @@ def courses_view(request):
 
 #-----------------------------------------------------------
 # 3. Registration View
+# FIX 1: Added =None to make course_id optional
 #-----------------------------------------------------------
-def register_view(request, course_id):
+def register_view(request, course_id=None): 
+    # Logic to handle both cases: with or without course_id
+    if course_id is None:
+        # If no course_id, redirect to the courses page or display an error
+        messages.error(request, "Please select a course to register.")
+        return redirect('courses_view')
+
     course = get_object_or_404(Course, id=course_id)
     
     if request.method == "POST":
@@ -204,7 +211,7 @@ def contact_view(request):
                     message=message
                 )
                 messages.success(request, "Thank you! Your message has been sent successfully.")
-                return redirect('thank_you') 
+                return redirect('thank_you_view') # Changed to correct view name
             else:
                 messages.error(request, "Please fill out your name and message.")
         
@@ -257,11 +264,14 @@ def testimonials_view(request):
 # 10. Utility Views
 #-----------------------------------------------------------
 def failure_view(request):
-    return render(request, 'registration/failure.html')
+    context = {} # Defined context
+    return render(request, 'registration/failure.html', context)
 
 def about_sir_view(request):
-    # 'about_view' के बजाय सही नाम का उपयोग किया गया
+    # FIX 2: Defined context = {}
+    context = {} 
     return render(request, 'registration/about.html', context)
     
 def thank_you_view(request):
-    return render(request, 'registration/thank_you.html')
+    context = {} # Defined context
+    return render(request, 'registration/thank_you.html', context)
