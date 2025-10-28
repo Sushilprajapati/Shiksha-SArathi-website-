@@ -1,8 +1,8 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.conf import settings
 from django.contrib import messages
-# [1] StudyMaterial और Participant दोनों को इम्पोर्ट किया गया
-from .models import Course, Participant, StudyMaterial 
+# [1] StudyMaterial, Participant और LiveLecture को इम्पोर्ट किया गया
+from .models import Course, Participant, StudyMaterial, LiveLecture
 import razorpay
 import json
 
@@ -90,7 +90,7 @@ def payment_view(request, registration_id):
     registration = get_object_or_404(Participant, id=registration_id)
     
     try:
-        razorpay_client = razorpay.Client(auth=(RAZORPAY_KEY_ID, RAORPAY_KEY_SECRET))
+        razorpay_client = razorpay.Client(auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET))
     except Exception as e:
         messages.error(request, "Payment configuration error. Contact support.")
         print(f"Razorpay Client Initialization Error: {e}")
@@ -174,12 +174,12 @@ def payment_status_view(request):
 
     return redirect('courses_view')
 
+
 #-----------------------------------------------------------
-# 6. Materials View (AttributeError Fix)
+# 6. Materials View
 #-----------------------------------------------------------
 def materials_view(request):
     try:
-        # यहाँ StudyMaterial मॉडल का उपयोग करें
         materials = StudyMaterial.objects.filter(price__gt=0).order_by('-published_at') 
         
     except Exception as e:
@@ -189,12 +189,29 @@ def materials_view(request):
     context = {
         'materials': materials
     }
-    # सुनिश्चित करें कि आपके पास 'registration/materials.html' template file मौजूद है
     return render(request, 'registration/materials.html', context)
+
+#-----------------------------------------------------------
+# 7. Lectures View (नया जोड़ा गया)
+#-----------------------------------------------------------
+def lectures_view(request):
+    try:
+        # सभी Live Lectures को Fetch करें
+        lectures = LiveLecture.objects.all().order_by('schedule_time') 
+        
+    except Exception as e:
+        print(f"Database error in lectures_view: {e}")
+        lectures = []
+        
+    context = {
+        'lectures': lectures
+    }
+    # सुनिश्चित करें कि आपके पास 'registration/lectures.html' template file मौजूद है
+    return render(request, 'registration/lectures.html', context)
 
 
 #-----------------------------------------------------------
-# 7. Utility Views
+# 8. Utility Views
 #-----------------------------------------------------------
 def success_view(request):
     return render(request, 'registration/success.html')
