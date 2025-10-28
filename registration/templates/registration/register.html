@@ -6,7 +6,7 @@
 :root {
     --primary-color: #1f3d7a;    /* Deep Blue */
     --secondary-color: #3a7bd5;  /* Bright Blue */
-    --accent-color: #ff6b6b;     /* Red/Pink Accent */
+    --accent-color: #ff6b6b;      /* Red/Pink Accent */
     --light-bg: #f5f7fa;
     --shadow-light: 0 12px 40px rgba(0, 0, 0, 0.15); /* Stronger shadow */
 }
@@ -105,6 +105,7 @@
 }
 
 /* Base style for inputs (form-input class from forms.py) */
+/* This style applies to the manually created SELECT/INPUT fields too */
 .form-input {
     flex-grow: 1;
     border: none;
@@ -234,6 +235,7 @@
                         <span class="input-icon"><i class="fas fa-user"></i></span>
                         {{ form.full_name }}
                     </div>
+                    {% comment %} Note: Since you're not passing a Form object, form.full_name.errors might not work. Use Django messages instead. {% endcomment %}
                     {% if form.full_name.errors %}{{ form.full_name.errors }}{% endif %}
                 </div>
                 
@@ -256,14 +258,21 @@
                 </div>
                 
                 <div class="form-group">
-                    <label for="{{ form.course.id_for_label }}">Desired Course</label>
+                    <label for="id_course">Desired Course</label>
                     <div class="input-group">
                         <span class="input-icon"><i class="fas fa-book-open"></i></span>
-                        {{ form.course }}
+                        <select name="course" id="id_course" class="form-input" required>
+                            {% if course %}
+                                <option value="{{ course.id }}" selected>{{ course.name }} - ₹{{ course.fee }}</option>
+                            {% else %}
+                                <option value="">--- Select a Course ---</option>
+                                {% for c in course_list %}
+                                    <option value="{{ c.id }}">{{ c.name }} - ₹{{ c.fee }}</option>
+                                {% endfor %}
+                            {% endif %}
+                        </select>
                     </div>
-                    {% if form.course.errors %}{{ form.course.errors }}{% endif %}
                 </div>
-                
                 <div class="form-group">
                     <label for="{{ form.school_name.id_for_label }}">School Name</label>
                     <div class="input-group">
@@ -300,7 +309,9 @@
                     {% if form.email.errors %}{{ form.email.errors }}{% endif %}
                 </div>
                 
-            </div> <div class="form-group full-width-group textarea-group">
+            </div> 
+            
+            <div class="form-group full-width-group textarea-group">
                 <label for="{{ form.school_address.id_for_label }}">Full School/Home Address</label>
                 <div class="input-group">
                     <span class="input-icon"><i class="fas fa-map-marker-alt"></i></span>
