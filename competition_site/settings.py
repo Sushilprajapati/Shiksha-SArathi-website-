@@ -1,7 +1,6 @@
 from pathlib import Path
 import os
 import dj_database_url
-from whitenoise.storage import CompressedManifestStaticFilesStorage
 
 # Base directory
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -11,21 +10,17 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECRET_KEY को एन्वायरनमेंट वेरिएबल से लें (सबसे सुरक्षित)
 SECRET_KEY = os.environ.get(
     'SECRET_KEY', 
-    'django-insecure-7lv5mf@px-1w*qkrc+5_kcja@j!f&nh6j20o@=b0^@#6eo!gqt'
+    'django-insecure-7lv5mf@px-1w*qkrc+5_kcja@j!f&nh6j20o@=b0^@#6eo!gqt' # लोकल उपयोग के लिए डिफ़ॉल्ट
 )
 
-# DEBUG सेटिंग को भी एन्वायरनमेंट वेरिएबल से लें। Render पर यह False होगा।
-# 'False' string को boolean False में बदलने के लिए
+# DEBUG सेटिंग को भी एन्वायरनमेंट वेरिएबल से लें।
 DEBUG = os.environ.get('DEBUG') == 'True' 
 
 # ALLOWED_HOSTS को एन्वायरनमेंट वेरिएबल से लें।
-# Render पर यह Render का URL होगा, लोकल में '*' या 'localhost' होगा।
-# Production में सुरक्षा के लिए, DEBUG=False होने पर '*' का उपयोग न करें।
-# Render URL को सीधे कोड में देने के बजाय Env Var का उपयोग करना बेहतर है।
 RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
 
 ALLOWED_HOSTS = [
-    'shiksha-sarathi-website.onrender.com', # आपका Render URL
+    'shiksha-sarathi-website.onrender.com', # आपका Render URL (सीधे भी रख सकते हैं)
     '127.0.0.1', 
     'localhost',
 ]
@@ -33,10 +28,11 @@ ALLOWED_HOSTS = [
 # Production के लिए ALLOWED_HOSTS को dynamic करें
 if RENDER_EXTERNAL_HOSTNAME:
     ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
-    # WhiteNoise के लिए आवश्यक: Production में Secure Headers सेट करें
+    # Render (या किसी भी प्रॉक्सी) के पीछे चलने पर HTTPS को सही से हैंडल करने के लिए
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-    # WhiteNoise को काम करने के लिए ROOT_URLCONF से पहले एक खाली स्ट्रिंग जोड़ें (कुछ मामलों में आवश्यक)
+    # Render URL को CSRF trusted origins में जोड़ें (लिंक समस्या के लिए सुरक्षा फिक्स)
     CSRF_TRUSTED_ORIGINS = ['https://' + RENDER_EXTERNAL_HOSTNAME]
+    
 
 # Application definition
 INSTALLED_APPS = [
@@ -46,12 +42,13 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'registration',  # your app
+    'registration',  # आपका ऐप
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     # WhiteNoise को यहाँ जोड़ें (Static फ़ाइल की समस्या ठीक करने के लिए)
+    # इसे SecurityMiddleware के ठीक बाद होना चाहिए
     'whitenoise.middleware.WhiteNoiseMiddleware',  
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -84,7 +81,6 @@ WSGI_APPLICATION = 'competition_site.wsgi.application'
 
 # --- 2. डायनामिक डेटाबेस कॉन्फ़िगरेशन (PostgreSQL/SQLite) ---
 
-# DATABASE_URL को एन्वायरनमेंट वेरिएबल से लें
 DATABASE_URL = os.environ.get('DATABASE_URL')
 
 DATABASES = {
@@ -94,6 +90,7 @@ DATABASES = {
     }
 }
 
+# Production में PostgreSQL का उपयोग करें
 if DATABASE_URL:
     DATABASES['default'] = dj_database_url.config(
         default=DATABASE_URL,
@@ -130,16 +127,16 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 # STATIC_ROOT: वह फ़ोल्डर जहाँ 'python manage.py collectstatic' सभी फ़ाइलों को कॉपी करेगा।
+# Render इसी फ़ोल्डर को सर्व करता है।
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # STATICFILES_DIRS: वह फ़ोल्डर जहाँ Django लोकल में स्टैटिक फ़ाइलों को ढूँढता है।
 STATICFILES_DIRS = [
     BASE_DIR / "static", 
-    # यदि आपके apps के अलावा एक global static folder है।
 ]
 
-# WhiteNoise का उपयोग करके Static फ़ाइलों को प्रबंधित करें (समस्या का समाधान)
-# यह Static फ़ाइल URL में एक कंटेंट हैश जोड़कर कैशिंग को ठीक करता है।
+# WhiteNoise का उपयोग करके Static फ़ाइलों को प्रबंधित करें (CSS/JS समस्या का समाधान)
+# यह WhiteNoise को फ़ाइलों को कंप्रेस करने और परोसने के लिए कहता है।
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 
@@ -150,7 +147,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# --- 4. अन्य कॉन्फ़िगरेशन (सिक्योरिटी के लिए एनवायरनमेंट वेरिएबल का उपयोग) ---
+# --- 4. अन्य कॉन्फ़िगरेशन (जैसे ईमेल, पेमेंट) ---
 
 # Razorpay configuration
 RAZORPAY_KEY_ID = os.environ.get('RAZORPAY_KEY_ID', 'rzp_test_RWCModYNZjsvEz') 
@@ -159,7 +156,7 @@ RAZORPAY_KEY_SECRET = os.environ.get('RAZORPAY_KEY_SECRET', 'wX1JeMNbVY307k6MOak
 # Email configuration 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
-# Port को integer में बदलें (आपकी पिछली त्रुटि को हल करने के लिए `try-except` रखा गया है)
+# Port को integer में बदलें
 try:
     EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 587))
 except ValueError:
