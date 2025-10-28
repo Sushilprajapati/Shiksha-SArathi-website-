@@ -24,8 +24,7 @@ def home_view(request):
     context = {
         'courses': courses
     }
-    return render(request, 'registration/home.html', context)
-
+    return render(request, 'registration/index.html', context)
 
 #-----------------------------------------------------------
 # 2. Courses View
