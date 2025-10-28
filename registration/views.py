@@ -42,32 +42,51 @@ def courses_view(request):
     return render(request, 'registration/courses.html', context)
 
 #-----------------------------------------------------------
-# 3. Registration View
-# FIX 1: Added =None to make course_id optional
+# 3. Registration View (UPDATED for direct access)
 #-----------------------------------------------------------
 def register_view(request, course_id=None): 
-    # Logic to handle both cases: with or without course_id
-    if course_id is None:
-        # If no course_id, redirect to the courses page or display an error
-        messages.error(request, "Please select a course to register.")
-        return redirect('courses_view')
+    course = None
+    # सारे एक्टिव कोर्स को fetch करें (ड्रॉपडाउन के लिए)
+    course_list = Course.objects.filter(is_active=True).order_by('name')
 
-    course = get_object_or_404(Course, id=course_id)
+    # अगर course_id URL में मौजूद है, तो उस कोर्स को fetch करें
+    if course_id:
+        course = get_object_or_404(Course, id=course_id)
+    
     
     if request.method == "POST":
         
         # Participant मॉडल के Fields 
-        full_name = request.POST.get('full_name') 
+        full_name = request.POST.get('full_name')  
         phone_number = request.POST.get('phone_number') 
         email = request.POST.get('email', '') 
         
-        # अन्य fields (उदाहरण के लिए)
-        dob = request.POST.get('dob') 
+        # अन्य fields
+        dob = request.POST.get('dob')  
         gender = request.POST.get('gender')
         school_name = request.POST.get('school_name')
         school_class = request.POST.get('school_class')
         school_address = request.POST.get('school_address')
-
+        
+        # POST data से कोर्स ID प्राप्त करें (फॉर्म से)
+        posted_course_id = request.POST.get('course') 
+        
+        # कोर्स सुनिश्चित करें: अगर course URL से नहीं मिला, तो POST data का उपयोग करें।
+        if not course and posted_course_id:
+            try:
+                course = Course.objects.get(id=posted_course_id)
+            except Course.DoesNotExist:
+                messages.error(request, "Selected course is invalid.")
+                # error के मामले में रजिस्ट्रेशन पेज को फिर से दिखाएँ
+                context = {'course_list': course_list, 'course': None}
+                return render(request, 'registration/register.html', context)
+        
+        # अंतिम चेक: अगर कोर्स अभी भी None है, तो error दें और फॉर्म फिर से दिखाएँ
+        if not course:
+            messages.error(request, "Please select a course to complete registration.")
+            context = {'course_list': course_list, 'course': None}
+            return render(request, 'registration/register.html', context)
+            
         # Participant ऑब्जेक्ट बनाएं
         registration = Participant.objects.create(
             registered_course=course,
@@ -83,8 +102,10 @@ def register_view(request, course_id=None):
         
         return redirect('payment_view', registration_id=registration.id)
     
+    # GET Request: रजिस्ट्रेशन पेज दिखाएँ (course_id=None होने पर भी यह चलेगा)
     context = {
-        'course': course
+        'course': course, 
+        'course_list': course_list # ड्रॉपडाउन के लिए सभी कोर्स भेजें
     }
     return render(request, 'registration/register.html', context)
 
@@ -219,7 +240,8 @@ def contact_view(request):
             messages.error(request, "An error occurred while sending your message.")
             print(f"Contact form submission error: {e}")
 
-    return render(request, 'registration/contact.html')
+    context = {} # Defined context
+    return render(request, 'registration/contact.html', context)
 
 #-----------------------------------------------------------
 # 8. Other App Views
