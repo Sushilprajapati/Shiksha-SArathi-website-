@@ -1,7 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.conf import settings
 from django.contrib import messages
-# [1] StudyMaterial, Participant और LiveLecture को इम्पोर्ट किया गया
 from .models import Course, Participant, StudyMaterial, LiveLecture
 import razorpay
 import json
@@ -49,17 +48,16 @@ def register_view(request, course_id):
     course = get_object_or_404(Course, id=course_id)
     
     if request.method == "POST":
-        
         # Participant मॉडल के Fields (आपको यहाँ form से सभी fields fetch करने होंगे)
         full_name = request.POST.get('full_name') 
         phone_number = request.POST.get('phone_number') 
         email = request.POST.get('email', '') 
         
-        # अन्य fields (उदाहरण के लिए, आपको इन्हें form से भेजना होगा)
-        dob = request.POST.get('dob') # Ensure correct date format is handled
+        # अन्य fields (उदाहरण के लिए)
+        dob = request.POST.get('dob') 
         gender = request.POST.get('gender')
         school_name = request.POST.get('school_name')
-        school_class = request.POST.get('school_class') # Ensure it's an integer
+        school_class = request.POST.get('school_class')
         school_address = request.POST.get('school_address')
 
         # Participant ऑब्जेक्ट बनाएं
@@ -68,11 +66,11 @@ def register_view(request, course_id):
             full_name=full_name,
             phone_number=phone_number,
             email=email,
-            dob=dob, # Example field
-            gender=gender, # Example field
-            school_name=school_name, # Example field
-            school_class=school_class, # Example field
-            school_address=school_address, # Example field
+            dob=dob, 
+            gender=gender, 
+            school_name=school_name, 
+            school_class=school_class, 
+            school_address=school_address, 
         )
         
         return redirect('payment_view', registration_id=registration.id)
@@ -119,6 +117,7 @@ def payment_view(request, registration_id):
             'razorpay_order_id': razorpay_order['id'],
             'razorpay_merchant_key': RAZORPAY_KEY_ID,
             'amount_in_paisa': amount_in_paisa,
+            # payment_status_view को कॉल करें
             'callback_url': request.build_absolute_uri('payment_status_view'), 
         }
         return render(request, 'registration/payment.html', context)
@@ -159,7 +158,8 @@ def payment_status_view(request):
             registration.save()
             
             messages.success(request, "Payment Successful! Your registration is complete.")
-            return redirect('success_view')
+            # [3] Success होने पर payment_success को redirect करें
+            return redirect('payment_success', participant_id=registration.id) 
 
         except Participant.DoesNotExist:
             messages.error(request, "Registration not found for this payment.")
@@ -174,48 +174,46 @@ def payment_status_view(request):
 
     return redirect('courses_view')
 
+#-----------------------------------------------------------
+# 6. Payment Success View (AttributeError Fix)
+#-----------------------------------------------------------
+# [1] Missing views.payment_success function is added here
+def payment_success(request, participant_id):
+    participant = get_object_or_404(Participant, id=participant_id)
+    context = {
+        'participant': participant,
+        'course': participant.registered_course
+    }
+    # यह 'success.html' template का उपयोग कर सकता है
+    return render(request, 'registration/success.html', context)
+
 
 #-----------------------------------------------------------
-# 6. Materials View
+# 7. Other App Views
 #-----------------------------------------------------------
 def materials_view(request):
     try:
         materials = StudyMaterial.objects.filter(price__gt=0).order_by('-published_at') 
-        
     except Exception as e:
         print(f"Database error in materials_view: {e}")
         materials = []
-        
-    context = {
-        'materials': materials
-    }
+    context = {'materials': materials}
     return render(request, 'registration/materials.html', context)
 
-#-----------------------------------------------------------
-# 7. Lectures View (नया जोड़ा गया)
-#-----------------------------------------------------------
 def lectures_view(request):
     try:
-        # सभी Live Lectures को Fetch करें
         lectures = LiveLecture.objects.all().order_by('schedule_time') 
-        
     except Exception as e:
         print(f"Database error in lectures_view: {e}")
         lectures = []
-        
-    context = {
-        'lectures': lectures
-    }
-    # सुनिश्चित करें कि आपके पास 'registration/lectures.html' template file मौजूद है
+    context = {'lectures': lectures}
     return render(request, 'registration/lectures.html', context)
 
 
 #-----------------------------------------------------------
 # 8. Utility Views
 #-----------------------------------------------------------
-def success_view(request):
-    return render(request, 'registration/success.html')
-
+# [2] success_view को हटा दिया गया क्योंकि payment_success इसका काम करेगा
 def failure_view(request):
     return render(request, 'registration/failure.html')
 
