@@ -5,7 +5,9 @@ import dj_database_url
 # Base directory
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# -----------------------------------------------------------
 # --- 1. सुरक्षा और होस्टिंग सेटिंग्स (Production Ready) ---
+# -----------------------------------------------------------
 
 # SECRET_KEY को एन्वायरनमेंट वेरिएबल से लें (सबसे सुरक्षित)
 SECRET_KEY = os.environ.get(
@@ -14,13 +16,14 @@ SECRET_KEY = os.environ.get(
 )
 
 # DEBUG सेटिंग को भी एन्वायरनमेंट वेरिएबल से लें।
+# Render पर यह 'False' होना चाहिए।
 DEBUG = os.environ.get('DEBUG') == 'True' 
 
 # ALLOWED_HOSTS को एन्वायरनमेंट वेरिएबल से लें।
 RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
 
 ALLOWED_HOSTS = [
-    'shiksha-sarathi-website.onrender.com', # आपका Render URL (सीधे भी रख सकते हैं)
+    'shiksha-sarathi-website.onrender.com', # आपका Render URL 
     '127.0.0.1', 
     'localhost',
 ]
@@ -28,12 +31,13 @@ ALLOWED_HOSTS = [
 # Production के लिए ALLOWED_HOSTS को dynamic करें
 if RENDER_EXTERNAL_HOSTNAME:
     ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
+    
     # Render (या किसी भी प्रॉक्सी) के पीछे चलने पर HTTPS को सही से हैंडल करने के लिए
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-    # Render URL को CSRF trusted origins में जोड़ें (लिंक समस्या के लिए सुरक्षा फिक्स)
+    
+    # Render URL को CSRF trusted origins में जोड़ें (लिंक और सुरक्षा फिक्स के लिए)
     CSRF_TRUSTED_ORIGINS = ['https://' + RENDER_EXTERNAL_HOSTNAME]
     
-
 # Application definition
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -47,8 +51,8 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    # WhiteNoise को यहाँ जोड़ें (Static फ़ाइल की समस्या ठीक करने के लिए)
-    # इसे SecurityMiddleware के ठीक बाद होना चाहिए
+    # WhiteNoise को यहाँ जोड़ें (Static फ़ाइल समस्या के लिए)
+    # यह SecurityMiddleware के ठीक बाद होना चाहिए
     'whitenoise.middleware.WhiteNoiseMiddleware',  
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -79,10 +83,13 @@ TEMPLATES = [
 WSGI_APPLICATION = 'competition_site.wsgi.application'
 
 
+# ----------------------------------------------------------------------
 # --- 2. डायनामिक डेटाबेस कॉन्फ़िगरेशन (PostgreSQL/SQLite) ---
+# ----------------------------------------------------------------------
 
 DATABASE_URL = os.environ.get('DATABASE_URL')
 
+# डिफ़ॉल्ट रूप से SQLite
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -90,7 +97,7 @@ DATABASES = {
     }
 }
 
-# Production में PostgreSQL का उपयोग करें
+# DATABASE_URL सेट होने पर PostgreSQL (या अन्य) का उपयोग करें
 if DATABASE_URL:
     DATABASES['default'] = dj_database_url.config(
         default=DATABASE_URL,
@@ -121,22 +128,23 @@ USE_I18N = True
 USE_L10N = True
 USE_TZ = True
 
+# -----------------------------------------------------------
 # --- 3. स्टैटिक फ़ाइल सेटिंग्स (WhiteNoise Fix) ---
+# -----------------------------------------------------------
 
 # STATIC_URL: URL जहाँ से ब्राउज़र स्टैटिक फ़ाइलें लोड करेगा
 STATIC_URL = '/static/'
 
 # STATIC_ROOT: वह फ़ोल्डर जहाँ 'python manage.py collectstatic' सभी फ़ाइलों को कॉपी करेगा।
-# Render इसी फ़ोल्डर को सर्व करता है।
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-# STATICFILES_DIRS: वह फ़ोल्डर जहाँ Django लोकल में स्टैटिक फ़ाइलों को ढूँढता है।
+# STATICFILES_DIRS: वह फ़ोल्डर जहाँ Django लोकल में अतिरिक्त स्टैटिक फ़ाइलों को ढूँढता है।
 STATICFILES_DIRS = [
     BASE_DIR / "static", 
 ]
 
 # WhiteNoise का उपयोग करके Static फ़ाइलों को प्रबंधित करें (CSS/JS समस्या का समाधान)
-# यह WhiteNoise को फ़ाइलों को कंप्रेस करने और परोसने के लिए कहता है।
+# यह WhiteNoise को फ़ाइलों को कंप्रेस करने और हमेशा के लिए कैश करने के लिए कहता है।
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 
@@ -147,9 +155,12 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# -----------------------------------------------------------
 # --- 4. अन्य कॉन्फ़िगरेशन (जैसे ईमेल, पेमेंट) ---
+# -----------------------------------------------------------
 
 # Razorpay configuration
+# Production में इन्हें Render Environment Variables में सेट किया जाना चाहिए
 RAZORPAY_KEY_ID = os.environ.get('RAZORPAY_KEY_ID', 'rzp_test_RWCModYNZjsvEz') 
 RAZORPAY_KEY_SECRET = os.environ.get('RAZORPAY_KEY_SECRET', 'wX1JeMNbVY307k6MOakrmu2d')
 
