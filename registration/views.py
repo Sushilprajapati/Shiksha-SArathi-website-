@@ -1,8 +1,8 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.conf import settings
 from django.contrib import messages
-# [1] Added ContactMessage to imports
-from .models import Course, Participant, StudyMaterial, LiveLecture, ContactMessage
+# ContactMessage मॉडल को इम्पोर्ट करना सुनिश्चित करें
+from .models import Course, Participant, StudyMaterial, LiveLecture, ContactMessage, Testimonial 
 import razorpay
 import json
 
@@ -50,7 +50,7 @@ def register_view(request, course_id):
     
     if request.method == "POST":
         
-        # Participant मॉडल के Fields (आपको यहाँ form से सभी fields fetch करने होंगे)
+        # Participant मॉडल के Fields 
         full_name = request.POST.get('full_name') 
         phone_number = request.POST.get('phone_number') 
         email = request.POST.get('email', '') 
@@ -187,7 +187,7 @@ def payment_success(request, participant_id):
 
 
 #-----------------------------------------------------------
-# 7. Contact View (AttributeError Fix)
+# 7. Contact View
 #-----------------------------------------------------------
 def contact_view(request):
     if request.method == "POST":
@@ -197,7 +197,6 @@ def contact_view(request):
             phone = request.POST.get('phone', '')
             message = request.POST.get('message')
             
-            # ContactMessage मॉडल का उपयोग करके नया मैसेज बनाएं
             if name and message:
                 ContactMessage.objects.create(
                     name=name,
@@ -206,7 +205,6 @@ def contact_view(request):
                     message=message
                 )
                 messages.success(request, "Thank you! Your message has been sent successfully.")
-                # 'thank_you' पेज पर redirect करें
                 return redirect('thank_you') 
             else:
                 messages.error(request, "Please fill out your name and message.")
@@ -238,16 +236,33 @@ def lectures_view(request):
     context = {'lectures': lectures}
     return render(request, 'registration/lectures.html', context)
 
+#-----------------------------------------------------------
+# 9. Testimonials View (नया जोड़ा गया)
+#-----------------------------------------------------------
+def testimonials_view(request):
+    try:
+        # Testimonial मॉडल से डेटा fetch करें
+        testimonials = Testimonial.objects.filter(is_approved=True).order_by('-created_at') 
+    except Exception as e:
+        print(f"Database error in testimonials_view: {e}")
+        testimonials = []
+        
+    context = {
+        'testimonials': testimonials
+    }
+    # सुनिश्चित करें कि आपके पास 'registration/testimonials.html' template file मौजूद है
+    return render(request, 'registration/testimonials.html', context)
+
 
 #-----------------------------------------------------------
-# 9. Utility Views
+# 10. Utility Views
 #-----------------------------------------------------------
 def failure_view(request):
     return render(request, 'registration/failure.html')
 
 def about_sir_view(request):
+    # 'about_view' के बजाय सही नाम का उपयोग किया गया
     return render(request, 'registration/about_sir.html')
     
 def thank_you_view(request):
-    """Simple thank you page after registration or contact."""
     return render(request, 'registration/thank_you.html')
