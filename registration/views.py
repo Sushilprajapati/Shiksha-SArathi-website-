@@ -48,6 +48,7 @@ def register_view(request, course_id):
     course = get_object_or_404(Course, id=course_id)
     
     if request.method == "POST":
+        
         # Participant मॉडल के Fields (आपको यहाँ form से सभी fields fetch करने होंगे)
         full_name = request.POST.get('full_name') 
         phone_number = request.POST.get('phone_number') 
@@ -117,7 +118,6 @@ def payment_view(request, registration_id):
             'razorpay_order_id': razorpay_order['id'],
             'razorpay_merchant_key': RAZORPAY_KEY_ID,
             'amount_in_paisa': amount_in_paisa,
-            # payment_status_view को कॉल करें
             'callback_url': request.build_absolute_uri('payment_status_view'), 
         }
         return render(request, 'registration/payment.html', context)
@@ -158,7 +158,7 @@ def payment_status_view(request):
             registration.save()
             
             messages.success(request, "Payment Successful! Your registration is complete.")
-            # [3] Success होने पर payment_success को redirect करें
+            # Success होने पर payment_success को redirect करें
             return redirect('payment_success', participant_id=registration.id) 
 
         except Participant.DoesNotExist:
@@ -175,9 +175,8 @@ def payment_status_view(request):
     return redirect('courses_view')
 
 #-----------------------------------------------------------
-# 6. Payment Success View (AttributeError Fix)
+# 6. Payment Success View
 #-----------------------------------------------------------
-# [1] Missing views.payment_success function is added here
 def payment_success(request, participant_id):
     participant = get_object_or_404(Participant, id=participant_id)
     context = {
@@ -211,11 +210,16 @@ def lectures_view(request):
 
 
 #-----------------------------------------------------------
-# 8. Utility Views
+# 8. Utility Views (Final addition: thank_you_view)
 #-----------------------------------------------------------
-# [2] success_view को हटा दिया गया क्योंकि payment_success इसका काम करेगा
 def failure_view(request):
     return render(request, 'registration/failure.html')
 
 def about_sir_view(request):
     return render(request, 'registration/about_sir.html')
+    
+# [नया जोड़ा गया] - URL में आवश्यक अंतिम View
+def thank_you_view(request):
+    """Simple thank you page after registration or contact."""
+    # आप इसे रजिस्ट्रेशन के बाद उपयोग कर सकते हैं, payment_success के बजाय
+    return render(request, 'registration/thank_you.html')
