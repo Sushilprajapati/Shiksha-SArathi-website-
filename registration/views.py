@@ -2,17 +2,24 @@ from django.shortcuts import render, redirect, get_object_or_404
 from .models import Branch, Course, StudyMaterial, LiveLecture, Participant, ContactMessage
 from .forms import ParticipantForm
 from django.conf import settings
-import razorpay
+import razorpay # razorpay library import की गई
 
-# Razorpay client
-razorpay_client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+# IMPORTANT FIX: Razorpay client initialization को हटा दिया गया है
+# इसे सिर्फ payment_view() के अंदर initialize करेंगे।
+# razorpay_client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
 
 # Home / Dashboard
 def home_view(request):
-    branches = Branch.objects.all()
-    featured_courses = Course.objects.filter(is_active=True)[:6]
-    latest_materials = StudyMaterial.objects.order_by('-published_at')[:6]
-    upcoming_lectures = LiveLecture.objects.order_by('schedule_time')[:5]
+    try:
+        branches = Branch.objects.all()
+        featured_courses = Course.objects.filter(is_active=True)[:6]
+        latest_materials = StudyMaterial.objects.order_by('-published_at')[:6]
+        upcoming_lectures = LiveLecture.objects.order_by('schedule_time')[:5]
+    except Exception as e:
+        # अगर कोई डेटाबेस एरर है तो कम से कम होम पेज को खाली डेटा के साथ लोड करें
+        # Production में हमेशा logs देखें।
+        print(f"Database Error in home_view: {e}") 
+        branches, featured_courses, latest_materials, upcoming_lectures = [], [], [], []
 
     return render(request, 'registration/index.html', {
         'branches': branches,
@@ -25,12 +32,13 @@ def home_view(request):
 def courses_view(request):
     courses = Course.objects.filter(is_active=True)
     return render(request, 'registration/courses.html', {'courses': courses})
-#about
+
+# about
 def about_view(request):
     # This will render a new template: registration/about.html
     return render(request, 'registration/about.html')
 
-#testino,ial
+# testimonial
 def testimonials_view(request):
     # This renders the new template where you can put all testimonials
     return render(request, 'registration/testimonials.html')
@@ -59,6 +67,17 @@ def register_view(request):
 # Payment
 def payment_view(request, participant_id):
     participant = get_object_or_404(Participant, id=participant_id)
+    
+    # FIX: Razorpay client को सिर्फ यहाँ initialize करें 
+    # इससे पूरे views.py को क्रैश होने से बचाया जा सकता है।
+    try:
+        razorpay_client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+    except Exception as e:
+        # अगर कीज गलत हैं तो यूजर को एरर दिखाएं (या लॉग करें)
+        print(f"Razorpay Client Initialization Error: {e}")
+        # यहां एक user-friendly error page पर redirect करना बेहतर है
+        return render(request, 'registration/payment_error.html', {'error': 'Payment service is temporarily unavailable.'})
+        
     if not participant.payment_completed:
         amount_paise = 10000  # 100 INR
         razorpay_order = razorpay_client.order.create(dict(
@@ -77,18 +96,18 @@ def payment_view(request, participant_id):
         'razorpay_key_id': settings.RAZORPAY_KEY_ID
     })
 
-# Payment Success
+# Payment Success (No change needed)
 def payment_success(request, participant_id):
     participant = get_object_or_404(Participant, id=participant_id)
     participant.payment_completed = True
     participant.save()
     return redirect('thank_you')
 
-# Thank You Page
+# Thank You Page (No change needed)
 def thank_you_view(request):
     return render(request, 'registration/thank_you.html')
 
-# Contact
+# Contact (No change needed)
 def contact_view(request):
     if request.method == 'POST':
         name = request.POST.get('name')
